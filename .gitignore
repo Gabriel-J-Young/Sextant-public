@@ -4,6 +4,8 @@ CMakeFiles/
 .vs
 *.jpg
 *.png
+*.vcxproj
+*.sln
 __pycache__/
 CalibrationInfo.txt
 Debug/
