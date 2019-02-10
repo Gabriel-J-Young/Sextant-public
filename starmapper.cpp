@@ -103,7 +103,6 @@ int main(int argc, char** argv)
 
 
 		if (waitKey(10) == 112) {
-
 		}
 
 		//wait for for 10 ms until any key is pressed.  
