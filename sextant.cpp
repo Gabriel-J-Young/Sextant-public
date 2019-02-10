@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 
 	cout << "Camera open!" << endl;
 	Size image_size = src.size();
-	cv::Size image_size_big = src.size() * 2;
+	//cv::Size image_size_big = src.size() * 2;
 
 	//gives us a new camera Mat that works for the function: "fisheye::initUndistortRectifyMap"
 	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
@@ -138,7 +138,7 @@ int main(int argc, char** argv)
 			drawContours(drawing, contours, i, color, 2, 8, hierarchy, 0, Point());
 		}
 		
-		//wait for 10 ms until any key is pressed.  
+		//wait for 1 ms until any key is pressed.  
 		//If the 'Esc' key is pressed, break the while loop.
 		//If the any other key is pressed, continue the loop 
 		//If any key is not pressed withing 10 ms, continue the loop 
