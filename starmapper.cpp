@@ -15,7 +15,7 @@ void thresh_callback(int, void*);
 int main(int argc, char** argv)
 {
 	//Open default camera
-	VideoCapture cap(0);
+	VideoCapture cap(4);
 
 	if (cap.isOpened() == false)
 	{
@@ -103,8 +103,6 @@ int main(int argc, char** argv)
 
 
 		if (waitKey(10) == 112) {
-			picojson::value v;
-			std::cout << v;
 		}
 
 		//wait for for 10 ms until any key is pressed.  

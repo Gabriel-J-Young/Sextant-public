@@ -11,7 +11,7 @@ Mat src; Mat src_unwarped; Mat src_gray; Mat src_thresh; Mat src_blur; Mat src_d
 int main(int argc, char** argv)
 {
 	//Open default camera
-	VideoCapture cap(2);
+	VideoCapture cap(4);
 
 	if (cap.isOpened() == false)
 	{
@@ -21,16 +21,19 @@ int main(int argc, char** argv)
 	}
 
 	cap.set(CAP_PROP_FOURCC, VideoWriter::fourcc('M', 'J', 'P', 'G'));
-	cap.set(CAP_PROP_FRAME_WIDTH, 1280);
-	cap.set(CAP_PROP_FRAME_HEIGHT, 720);
+	cap.set(CAP_PROP_FRAME_WIDTH, 1920);
+	cap.set(CAP_PROP_FRAME_HEIGHT, 1080);
 
 	cout << cap.get(CAP_PROP_FOURCC) << endl;
 	double dWidth = cap.get(CAP_PROP_FRAME_WIDTH);
 	double dHeight = cap.get(CAP_PROP_FRAME_HEIGHT);
 	cout << "Resolution is: " << dWidth << " x " << dHeight << endl;
 
-	Mat K = (Mat_<double>(3,3) << 238.82483251892208, 0.0, 318.16929539273366, 0.0, 239.06534916420654, 242.86520890990545, 0.0, 0.0, 1.0);
-	Mat D = (Mat_<double>(1, 4) << -0.04042847278703006, 0.002813389381558989, -0.006067430365909259, 0.0012053547649747928);
+	Mat K = (Mat_<double>(3, 3) << 540.6884489226692, 0.0, 951.3635524878698, 0.0, 540.4187901470385, 546.9124878500451, 0.0, 0.0, 1.0);
+	Mat D = (Mat_<double>(1, 4) << -0.04517325603821452, 0.001435732351585509, -0.004105241869408653, 0.0009228132505096691);
+
+	//Mat K = (Mat_<double>(3,3) << 238.82483251892208, 0.0, 318.16929539273366, 0.0, 239.06534916420654, 242.86520890990545, 0.0, 0.0, 1.0);
+	//Mat D = (Mat_<double>(1, 4) << -0.04042847278703006, 0.002813389381558989, -0.006067430365909259, 0.0012053547649747928);
 	cout << "K = " << K << endl;
 	cout << "D = " << D << endl;
 
@@ -53,7 +56,7 @@ int main(int argc, char** argv)
 	cv::Size image_size_big = src.size() * 2;
 
 	//gives us a new camera Mat that works for the function: "fisheye::initUndistortRectifyMap"
-	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
+	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 0, image_size);
 
 	//gives us outputarrays containing data needed for unwarping
 	fisheye::initUndistortRectifyMap(K, D, Matx33d::eye(), newCamMatForUndistort, image_size, CV_16SC2, map1, map2);
@@ -79,7 +82,8 @@ int main(int argc, char** argv)
 	/// Find contours
 	findContours(canny_output, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-
+	/*
+	//this shit crashes the program fix it
 	for (int i = 0; i < contours.size(); i++) {
 		for (int j = 0; j < contours[i].size(); j++) {
 			contours1[i][j].x = (float)contours[i][j].x;
@@ -87,7 +91,7 @@ int main(int argc, char** argv)
 			contours1[i][j].z = 1.0;
 		}
 	}
-
+	*/
 	Mat rvec; Mat tvec; Mat inliers;
 	
 	while (true)
