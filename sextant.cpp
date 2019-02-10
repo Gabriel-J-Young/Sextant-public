@@ -1,10 +1,6 @@
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 #include <iostream>
-#include <opencv2/calib3d.hpp>
-
+#include "picojson.h"
 
 using namespace cv;
 using namespace std;
@@ -15,7 +11,7 @@ Mat src; Mat src_unwarped; Mat src_gray; Mat src_thresh; Mat src_blur; Mat src_d
 int main(int argc, char** argv)
 {
 	//Open default camera
-	VideoCapture cap(4);
+	VideoCapture cap(2);
 
 	if (cap.isOpened() == false)
 	{
@@ -24,8 +20,8 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	cap.set(CAP_PROP_FRAME_WIDTH, 640);
-	cap.set(CAP_PROP_FRAME_HEIGHT, 480);
+	cap.set(CAP_PROP_FRAME_WIDTH, 1280);
+	cap.set(CAP_PROP_FRAME_HEIGHT, 720);
 	double dWidth = cap.get(CAP_PROP_FRAME_WIDTH);
 	double dHeight = cap.get(CAP_PROP_FRAME_HEIGHT);
 	cout << "Resolution is: " << dWidth << " x " << dHeight << endl;
@@ -49,10 +45,9 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	Size image_size;
-	image_size = src.size();
-	cv::Size image_size_big;
-	image_size_big = src.size() * 2;
+	cout << "Camera open!" << endl;
+	Size image_size = src.size();
+	cv::Size image_size_big = src.size() * 2;
 
 	//gives us a new camera Mat that works for the fucntion: "fisheye::initUndistortRectifyMap"
 	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
@@ -65,15 +60,15 @@ int main(int argc, char** argv)
 
 	//turns source from BGR to grayscale
 	cvtColor(src_unwarped, src_gray, COLOR_BGR2GRAY);
-	imshow("gray", src_gray);
+	//imshow("gray", src_gray);
 
 	//blurs the image
 	blur(src_gray, src_blur, Size(3, 3));
-	imshow("blur", src_blur);
+	//imshow("blur", src_blur);
 
 	//thersholds grayscaled image
 	cv::threshold(src_blur, src_thresh, 230, 255, THRESH_BINARY);
-	imshow("thresh", src_thresh);
+	//imshow("thresh", src_thresh);
 
 	/// Detect edges using canny
 	Canny(src_thresh, canny_output, 240, 255, 3);
@@ -89,10 +84,12 @@ int main(int argc, char** argv)
 			contours1[i][j].z = 1.0;
 		}
 	}
+
+	Mat rvec; Mat tvec; Mat inliers;
 	
 	while (true)
 	{
-		bSuccess; // read a new frame from video 
+		bSuccess = cap.read(src); // read a new frame from video 
 		//Breaking the while loop if the frames cannot be captured
 		if (bSuccess == false)
 		{
@@ -102,20 +99,15 @@ int main(int argc, char** argv)
 		}
 		imshow("before", src);
 		cv::Mat map1, map2;
-		cv::Size image_size;
-		image_size = src.size();
 		//fisheye::undistortImage(src, src, K, D);
 
 		Mat newCamMatForUndistort;
 		
-		cv::Size image_size_big;
-		image_size_big = src.size()*2;
-
 		//gives us a new camera Mat that works for the fucntion: "fisheye::initUndistortRectifyMap"
-		fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size_big);
+		fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
 
 		//gives us outputarrays containing data needed for unwarping
-		fisheye::initUndistortRectifyMap(K, D, Matx33d::eye(), newCamMatForUndistort, image_size_big, CV_16SC2, map1, map2);
+		fisheye::initUndistortRectifyMap(K, D, Matx33d::eye(), newCamMatForUndistort, image_size, CV_16SC2, map1, map2);
 
 		//remaps the Mat accoring to unwarping data from "fisheye::initUndistortRectifyMap"
 		remap(src, src_unwarped, map1, map2, cv::INTER_LINEAR);
@@ -126,7 +118,7 @@ int main(int argc, char** argv)
 
 		//blurs the image; try this more
 		blur(src_gray, src_blur, Size(3, 3));
-		imshow("blur", src_blur);
+		//imshow("blur", src_blur);
 
 		//thersholds grayscaled image
 		cv::threshold(src_blur, src_thresh, 230, 255, THRESH_BINARY);
@@ -139,8 +131,6 @@ int main(int argc, char** argv)
 
 		/// Find contours
 		findContours(canny_output, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE, Point(0, 0));
-		
-		Mat rvec; Mat tvec; Mat inliers;
 
 		//solvePnPRansac(contours1, contours, K, D, rvec, tvec, 0, 100);
 			
@@ -159,7 +149,7 @@ int main(int argc, char** argv)
 		//If the 'Esc' key is pressed, break the while loop.
 		//If the any other key is pressed, continue the loop 
 		//If any key is not pressed withing 10 ms, continue the loop 
-		int keyValue = waitKey(10);
+		int keyValue = waitKey(1);
 		if (keyValue == 27)
 		{
 			cout << "Esc key is pressed by user. Stoppig the video" << endl;
