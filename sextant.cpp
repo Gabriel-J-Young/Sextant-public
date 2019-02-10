@@ -20,8 +20,11 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	cap.set(CAP_PROP_FOURCC, VideoWriter::fourcc('M', 'J', 'P', 'G'));
 	cap.set(CAP_PROP_FRAME_WIDTH, 1280);
 	cap.set(CAP_PROP_FRAME_HEIGHT, 720);
+
+	cout << cap.get(CAP_PROP_FOURCC) << endl;
 	double dWidth = cap.get(CAP_PROP_FRAME_WIDTH);
 	double dHeight = cap.get(CAP_PROP_FRAME_HEIGHT);
 	cout << "Resolution is: " << dWidth << " x " << dHeight << endl;
@@ -49,7 +52,7 @@ int main(int argc, char** argv)
 	Size image_size = src.size();
 	cv::Size image_size_big = src.size() * 2;
 
-	//gives us a new camera Mat that works for the fucntion: "fisheye::initUndistortRectifyMap"
+	//gives us a new camera Mat that works for the function: "fisheye::initUndistortRectifyMap"
 	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
 
 	//gives us outputarrays containing data needed for unwarping
@@ -98,17 +101,7 @@ int main(int argc, char** argv)
 			break;
 		}
 		imshow("before", src);
-		cv::Mat map1, map2;
-		//fisheye::undistortImage(src, src, K, D);
-
-		Mat newCamMatForUndistort;
 		
-		//gives us a new camera Mat that works for the fucntion: "fisheye::initUndistortRectifyMap"
-		fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
-
-		//gives us outputarrays containing data needed for unwarping
-		fisheye::initUndistortRectifyMap(K, D, Matx33d::eye(), newCamMatForUndistort, image_size, CV_16SC2, map1, map2);
-
 		//remaps the Mat accoring to unwarping data from "fisheye::initUndistortRectifyMap"
 		remap(src, src_unwarped, map1, map2, cv::INTER_LINEAR);
 
