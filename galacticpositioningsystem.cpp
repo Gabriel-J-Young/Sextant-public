@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 	//imshow("blur", src_blur);
 
 	//thersholds grayscaled image
-	cv::threshold(src_blur, src_thresh, 230, 255, THRESH_BINARY);
+	cv::threshold(src_blur, src_thresh, 240, 255, THRESH_BINARY);
 	//imshow("thresh", src_thresh);
 
 	/// Detect edges using canny
@@ -114,8 +114,8 @@ int main(int argc, char** argv)
 		imshow("gray", src_gray);
 
 		//blurs the image; try this more
-		blur(src_gray, src_blur, Size(3, 3));
-		//imshow("blur", src_blur);
+		blur(src_gray, src_blur, Size(10, 10));
+		imshow("blur", src_blur);
 
 		//thersholds grayscaled image
 		cv::threshold(src_blur, src_thresh, 230, 255, THRESH_BINARY);
