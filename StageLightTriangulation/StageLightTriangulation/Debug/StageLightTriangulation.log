@@ -1,4 +1,0 @@
-﻿  StageLightTriangulation.cpp
-c:\users\gabriel young\source\repos\stagelighttriangulation\stagelighttriangulation\stagelighttriangulation.cpp(68): warning C4018: '<': signed/unsigned mismatch
-pch.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/INCREMENTAL:NO' specification
-opencv_core341.lib(opencv_core341.dll) : fatal error LNK1112: module machine type 'x64' conflicts with target machine type 'x86'
