@@ -5,12 +5,12 @@
 #include <opencv2/imgproc.hpp>
 #include <iostream>
 #include <opencv2/calib3d.hpp>
+#include <picojson.h>
 
 using namespace cv;
 using namespace std;
 
 Mat src; Mat src_unwarped; Mat src_gray; Mat src_thresh; Mat src_blur; Mat src_dilate; Mat src_erode; Mat canny_output; Mat drawing, erosion_dst;
-
 
 int main(int argc, char** argv)
 {
