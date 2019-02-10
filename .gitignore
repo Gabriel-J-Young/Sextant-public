@@ -6,6 +6,9 @@ CMakeFiles/
 *.png
 *.vcxproj
 *.sln
+*.exe
+*.so
+*.a
 __pycache__/
 CalibrationInfo.txt
 Debug/
