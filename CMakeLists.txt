@@ -9,8 +9,8 @@ find_package (OpenCV REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-add_executable (sextant sextant.cpp)
-target_link_libraries(sextant ${OpenCV_LIBS})
+add_executable (galacticpositioningsystem galacticpositioningsystem.cpp)
+target_link_libraries(galacticpositioningsystem ${OpenCV_LIBS})
 
 add_executable (starmapper starmapper.cpp)
 target_link_libraries(starmapper ${OpenCV_LIBS})

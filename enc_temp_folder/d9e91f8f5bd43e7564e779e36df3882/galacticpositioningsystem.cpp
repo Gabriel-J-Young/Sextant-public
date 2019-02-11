@@ -164,7 +164,6 @@ int main(int argc, char** argv)
 		hulls = getHulls(src_unwarped);
 
 		Mat rvec; Mat tvec; Mat inliers;
-		Mat incontour = contours3D[0];
 		solvePnPRansac(contours3D.at(0), hulls.at(0), K, D, rvec, tvec);// , false, 100, 8.0, 100, noArray(), CV_EPNP);
 		//cout << rvec << endl;
 		//cout << tvec << endl;
