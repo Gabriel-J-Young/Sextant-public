@@ -5,8 +5,6 @@
 using namespace cv;
 using namespace std;
 
-
-
 vector<vector<Point2d>> getHulls(Mat& src)
 {
 	
@@ -63,9 +61,80 @@ vector<vector<Point2d>> getHulls(Mat& src)
 			hulls.push_back(hullout);
 		//}
 	}
-	cout << "size of hulls: " << hulls.size() << endl;
+	//Mat drawing = Mat::zeros(canny_output.size(), CV_8UC3);
+	//for (int i = 0; i < contours.size(); i++)
+	//{
+	//	Scalar color = Scalar(167, 151, 0); // B G R values
+	//	drawContours(drawing, hull, (int)i, color);
+	//}
+	//imshow("Hull demo", drawing);
+	//cout << "size of hullllllllllllllllls: " << hulls.size() << endl;
 	return hulls;
 }
+
+//vector<Point2f> getCentriods(Mat& src)
+//{
+//
+//	Mat src_gray, canny_output, src_working;
+//	vector<vector<Point> > contours;
+//	vector<Vec4i> hierarchy;
+//	//turns source from BGR to grayscale
+//	cvtColor(src, src_working, COLOR_BGR2GRAY);
+//	imshow("gray", src_working);
+//
+//	//blurs the image
+//	blur(src_working, src_working, Size(5, 5));
+//	imshow("blur", src_working);
+//
+//	//thersholds grayscaled image
+//	threshold(src_working, src_working, 240, 255, THRESH_BINARY);
+//	imshow("thresh", src_working);
+//
+//	//erodes the images- makes white parts smaller 
+//	int erosion_size = 10;
+//	Mat element = getStructuringElement(0,
+//		Size(2 * erosion_size + 1, 2 * erosion_size + 1),
+//		Point(erosion_size, erosion_size));
+//	erode(src_working, src_working, element);
+//	imshow("erode", src_working);
+//
+//	//Dilates the image- makes white parts bigger
+//	int dilation_size = 10;
+//	Mat element1 = getStructuringElement(0,
+//		Size(2 * dilation_size + 1, 2 * dilation_size + 1),
+//		Point(dilation_size, dilation_size));
+//	dilate(src_working, src_working, element1);
+//	imshow("dilate", src_working);
+//	waitKey(1);
+//	/// Detect edges using canny
+//	Canny(src_working, canny_output, 250, 255, 3);
+//	/// Find contours
+//	findContours(canny_output, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+//	//get moments
+//	vector<Moments> mu(contours.size());
+//	for (int i = 0; i < contours.size(); i++) 
+//	{
+//		mu[i] = moments(contours[i], false);
+//	}
+//
+//	//get centroids of figures 
+//	vector<Point2f> mc(contours.size());
+//	for (int i = 0; i < contours.size(); i++)
+//	{
+//		mc[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
+//	}
+//
+//
+//	Mat drawing(canny_output.size(), CV_8UC3, Scalar(255, 255, 255));
+//	for (int i = 0; i < contours.size(); i++)
+//	{
+//		Scalar color = Scalar(167, 151, 0); // B G R values
+//		drawContours(drawing, contours, i, color, 2, 8, hierarchy, 0, Point());
+//		circle(drawing, mc[i], 4, color, -1, 8, 0);
+//	}
+//	imshow("Contours", drawing);
+//	return mc;
+//}
 
 int main(int argc, char** argv)
 {
@@ -95,6 +164,7 @@ int main(int argc, char** argv)
 	cout << "D = " << D << endl;
 	vector<vector<Point2d>> hulls;
 	vector<vector<Point3d>> contours3D;
+	vector<Point2f> centriods;
 	Mat newCamMatForUndistort;
 	Mat map1, map2;
 
@@ -109,7 +179,7 @@ int main(int argc, char** argv)
 	cout << "Camera open!" << endl;
 	Size image_size = src.size();
 	//gives us a new camera Mat that works for the function: "fisheye::initUndistortRectifyMap"
-	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 0, image_size);
+	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
 
 	//gives us outputarrays containing data needed for unwarping
 	fisheye::initUndistortRectifyMap(K, D, Matx33d::eye(), newCamMatForUndistort, image_size, CV_16SC2, map1, map2);
@@ -120,7 +190,9 @@ int main(int argc, char** argv)
 	string str;
 	imshow("KJDG", src_unwarped);
 	waitKey(1);
+
 	hulls = getHulls(src_unwarped);
+
 	cout << "houston, this is yeet two " << endl;
 	for (int i = 0; i < hulls.size(); i++) 
 	{
@@ -130,21 +202,21 @@ int main(int argc, char** argv)
 			Point3d point;
 			point.x = (double)hulls[i][j].x;
 			point.y = (double)hulls[i][j].y;
-			point.z = 1.0f;
+			point.z = 1.0;
 			newvec.push_back(point);
 		}
 		contours3D.push_back(newvec);
 	}
 
-	for (int i = 0; i < contours3D.size(); i++)
-	{
-		for (int j = 0; j < contours3D[i].size(); j++)
-		{
-			cout << "contours3D: " << i << ", " << j << endl;
-			cout << contours3D[i][j] << endl;
-		}
+	//for (int i = 0; i < contours3D.size(); i++)
+	//{
+	//	for (int j = 0; j < contours3D[i].size(); j++)
+	//	{
+	//		cout << "contours3D: " << i << ", " << j << endl;
+	//		cout << contours3D[i][j] << endl;
+	//	}
 
-	}
+	//}
 
 	while (true)
 	{
@@ -164,12 +236,41 @@ int main(int argc, char** argv)
 		hulls = getHulls(src_unwarped);
 
 		Mat rvec; Mat tvec; Mat inliers;
-		Mat incontour = contours3D[0];
-		solvePnPRansac(contours3D.at(0), hulls.at(0), K, D, rvec, tvec);// , false, 100, 8.0, 100, noArray(), CV_EPNP);
-		//cout << rvec << endl;
-		//cout << tvec << endl;
+		//Mat incontour = contours3D[0];
+		//centriods = getCentriods(src_unwarped);
+		
+		/*for (int i = 0; i <= hulls.size(); i++) {
+			cout << hulls[i];
+		}*/
+
+		vector<Point2d> image_points;
+		image_points.push_back(cv::Point2d(359, 391));    // Nose tip
+		image_points.push_back(cv::Point2d(399, 561));    // Chin
+		image_points.push_back(cv::Point2d(337, 297));     // Left eye left corner
+		image_points.push_back(cv::Point2d(513, 301));    // Right eye right corner
+		image_points.push_back(cv::Point2d(345, 465));    // Left Mouth corner
+		image_points.push_back(cv::Point2d(453, 469));    // Right mouth corner
+
+		// 3D model points.
+		vector<Point3d> model_points;
+		model_points.push_back(cv::Point3d(0.0f, 0.0f, 0.0f));               // Nose tip
+		model_points.push_back(cv::Point3d(0.0f, -330.0f, -65.0f));          // Chin
+		model_points.push_back(cv::Point3d(-225.0f, 170.0f, -135.0f));       // Left eye left corner
+		model_points.push_back(cv::Point3d(225.0f, 170.0f, -135.0f));        // Right eye right corner
+		model_points.push_back(cv::Point3d(-150.0f, -150.0f, -125.0f));      // Left Mouth corner
+		model_points.push_back(cv::Point3d(150.0f, -150.0f, -125.0f));
+
+		int npoints = std::max(contours3D[0].checkVector(3, CV_32F), contours3D.checkVector(3, CV_64F));
+		cout << "npoints: " << npoints << endl;
+
+		//solvePnPRansac(model_points, image_points, K, D, rvec, tvec);
+		cout << "contours3D[0]: " << contours3D[0] << endl;
+		cout << "hulls[0]: " << hulls[0] << endl;
+		solvePnPRansac(contours3D[0], hulls[0], K, D, rvec, tvec);// , false, 100, 8.0, 100, noArray(), CV_EPNP);
+		cout << "rvec: " << rvec << endl;
+		cout << "tvec: "<< tvec << endl;
 		//Draw contours
-		drawing = Mat::zeros(src_unwarped.size(), CV_8UC3);
+		//drawing = Mat::zeros(src_unwarped.size(), CV_8UC3);
 
 		//for (int i = 0; i < hulls.size(); i++)
 		//{
