@@ -138,7 +138,17 @@ vector<vector<Point2d>> getHulls(Mat& src)
 
 int main(int argc, char** argv)
 {
-	Mat src; Mat src_unwarped; Mat drawing;
+	//declaration of Mats, vectors, and vectors of vectors
+		//camera frame accessors
+		Mat src; Mat src_unwarped; Mat drawing;
+		//output Mats for calibration 
+		Mat newCamMatForUndistort;
+		Mat map1, map2;
+		//vectors and  vectors of vectors of important points found by filtering
+		vector<vector<Point2d>> hulls;
+		vector<vector<Point3d>> contours3D;
+		vector<Point2f> centriods;
+
 	//Open default camera
 	VideoCapture cap(4);
 
@@ -149,34 +159,37 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	//I have no idea what this does 
 	cap.set(CAP_PROP_FOURCC, VideoWriter::fourcc('M', 'J', 'P', 'G'));
+	cout << cap.get(CAP_PROP_FOURCC) << endl;
+
+	//manually sets camera dimensions
 	cap.set(CAP_PROP_FRAME_WIDTH, 1920);
 	cap.set(CAP_PROP_FRAME_HEIGHT, 1080);
-	cout << cap.get(CAP_PROP_FOURCC) << endl;
+	
+	//finds & prints camera dimensions
 	double dWidth = cap.get(CAP_PROP_FRAME_WIDTH);
 	double dHeight = cap.get(CAP_PROP_FRAME_HEIGHT);
 	cout << "Resolution is: " << dWidth << " x " << dHeight << endl;
+
+	//hardcoded calibration data
 	Mat K = (Mat_<double>(3, 3) << 540.6884489226692, 0.0, 951.3635524878698, 0.0, 540.4187901470385, 546.9124878500451, 0.0, 0.0, 1.0);
 	Mat D = (Mat_<double>(1, 4) << -0.04517325603821452, 0.001435732351585509, -0.004105241869408653, 0.0009228132505096691);
 	//Mat K = (Mat_<double>(3,3) << 238.82483251892208, 0.0, 318.16929539273366, 0.0, 239.06534916420654, 242.86520890990545, 0.0, 0.0, 1.0);
 	//Mat D = (Mat_<double>(1, 4) << -0.04042847278703006, 0.002813389381558989, -0.006067430365909259, 0.0012053547649747928);
 	cout << "K = " << K << endl;
 	cout << "D = " << D << endl;
-	vector<vector<Point2d>> hulls;
-	vector<vector<Point3d>> contours3D;
-	vector<Point2f> centriods;
-	Mat newCamMatForUndistort;
-	Mat map1, map2;
 
-	bool bSuccess = cap.read(src); // read a new frame from video, breaking the while loop if the frames cannot be captured
+	// read a new frame from video, breaking the while loop if the frames cannot be captured
+	bool bSuccess = cap.read(src); 
 	if (bSuccess == false)
 	{
 		cout << "Video camera is disconnected" << endl;
 		cin.get(); //Wait for any key press
 		return 0;
 	}
-
 	cout << "Camera open!" << endl;
+
 	Size image_size = src.size();
 	//gives us a new camera Mat that works for the function: "fisheye::initUndistortRectifyMap"
 	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
@@ -191,9 +204,12 @@ int main(int argc, char** argv)
 	imshow("KJDG", src_unwarped);
 	waitKey(1);
 
+	//getHulls returns the corners of external contours as a vector of vector of 2d Points
 	hulls = getHulls(src_unwarped);
 
 	cout << "houston, this is yeet two " << endl;
+
+	//assigns the important points found by getHulls from the first frame to contours3D
 	for (int i = 0; i < hulls.size(); i++) 
 	{
 		vector<Point3d> newvec;
@@ -208,6 +224,7 @@ int main(int argc, char** argv)
 		contours3D.push_back(newvec);
 	}
 
+	//prints out contours3D
 	//for (int i = 0; i < contours3D.size(); i++)
 	//{
 	//	for (int j = 0; j < contours3D[i].size(); j++)
@@ -220,12 +237,13 @@ int main(int argc, char** argv)
 
 	while (true)
 	{
-		bSuccess = cap.read(src); // read a new frame from video 
-		//Breaking the while loop if the frames cannot be captured
+		// read a new frame from video breaking the while loop if the frames cannot be captured
+		bSuccess = cap.read(src); 
 		if (bSuccess == false)
 		{
 			cout << "Video camera is disconnected" << endl;
-			cin.get(); //Wait for any key press
+			//Wait for any key press
+			cin.get(); 
 			break;
 		}
 		imshow("before", src);
@@ -233,6 +251,7 @@ int main(int argc, char** argv)
 		//remaps the Mat accoring to unwarping data from "fisheye::initUndistortRectifyMap"
 		remap(src, src_unwarped, map1, map2, cv::INTER_LINEAR);
 
+		//getHulls returns the corners of external contours as a vector of vector of 2d Points
 		hulls = getHulls(src_unwarped);
 
 		Mat rvec; Mat tvec; Mat inliers;
