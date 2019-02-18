@@ -58,24 +58,15 @@ int main(int argc, char** argv) {
 	//extractor->detectAndCompute(img1, Mat(), keypoints1, descriptors1);
 	//extractor->detectAndCompute(img2, Mat(), keypoints2, descriptors2);
 	 
+
 	Ptr<GFTTDetector> detector = GFTTDetector::create();
 	detector->detect(img1, keypoints1);
 	detector->detect(img2, keypoints2);
-
-
-	//for (int i = 0; i < keypoints1.size(); i++) {
-	//	cout << keypoints1[i].pt;
-	//}
 
 	Ptr<BriefDescriptorExtractor> extractor = BriefDescriptorExtractor::create();
 	extractor->compute(img1, keypoints1, descriptors1);
 	extractor->compute(img2, keypoints2, descriptors2);
 
-
-	/*cout << keypoints1[0].pt;
-	for (int i = 0; i < keypoints1.size(); i++) {
-		cout << keypoints1[i].pt;
-	}*/
 
 	// Match features.
 	vector<DMatch> matches;
@@ -183,7 +174,7 @@ int main(int argc, char** argv) {
 	cout << "homo is: " << endl << homo << endl;
 
 	////use homo to warp image
-	warpPerspective(img2, img1Reg, homo, img2.size());
+	warpPerspective(img1, img1Reg, homo, img2.size());
 	imshow("yeet window", img1Reg);
 	
 	imwrite("C:\\Users\\Gabriel Young\\Desktop\\X-Bot\\Vision\\sextant\\build\\yeet.jpg", img1Reg);
