@@ -33,9 +33,11 @@ Mat computeHomography(const Mat &R_1to2, const Mat &tvec_1to2, const double d_in
 
 int main(int argc, char** argv) {
 	Mat img1Reg;
-	Mat img1 = imread("IMG_1365.JPG");
-	Mat img2 = imread("image.png");
+	Mat img1 = imread("lower.jpg");
+	Mat img2 = imread("upper.jpg");
 	//resize(img1, img1, Size(), .25, .25);
+	resize(img1, img1, Size(), .25, .25);
+	resize(img2, img2, Size(), .25, .25);
 
 	Mat K = (Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
 	Mat D = (Mat_<double>(1, 4) << 0, 0, 0, 0);
@@ -169,17 +171,19 @@ int main(int argc, char** argv) {
 	Mat homo_dist = computeHomography(R_1to2, t_1to2, d_inv1, normal1);
 	Mat homo = K * homo_dist * K.inv();
 
+	cout << "homo_dist: " << endl <<  homo_dist << endl;
 	homo /= homo.at<double>(2, 2);
 	homo_dist /= homo_dist.at<double>(2, 2);
+
 
 	////find homo
 	//homo = findHomography(points1, points2, RANSAC);
 	//cout << "THE SIZE OF HOMO" << homo.size() << endl;
 
-	cout << "homo is: " << homo << endl;
+	cout << "homo is: " << endl << homo << endl;
 
 	////use homo to warp image
-	warpPerspective(img1, img1Reg, homo, img2.size());
+	warpPerspective(img2, img1Reg, homo, img2.size());
 	imshow("yeet window", img1Reg);
 	
 	imwrite("C:\\Users\\Gabriel Young\\Desktop\\X-Bot\\Vision\\sextant\\build\\yeet.jpg", img1Reg);
