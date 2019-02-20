@@ -67,6 +67,7 @@ int main(int argc, char** argv)
 
 	// read a new frame from video, breaking the while loop if the frames cannot be captured
 	bool bSuccess = cap.read(src);
+	bSuccess = cap.read(src);
 	if (bSuccess == false)
 	{
 		cout << "Video camera is disconnected" << endl;
@@ -141,43 +142,52 @@ int main(int argc, char** argv)
 		vector<Point2f> pointsRef, pointsLive;
 		for (size_t i = 0; i < matches.size(); i++) {
 			pointsRef.push_back(keypointsRef[matches[i].queryIdx].pt);
-			pointsLive.push_back(keypointsLive[matches[i].queryIdx].pt);
+			pointsLive.push_back(keypointsLive[matches[i].trainIdx].pt);
 		}
 
-		vector<Point3f> pointsRef3D, pointsLive3D;
+		Mat homo;
+		Mat out;
+		homo = findHomography(pointsRef, pointsLive, RANSAC);
 
-		for (int i = 0; i < pointsRef.size(); i++) {
-			Point3f point;
-			point.x = pointsRef[i].x;
-			point.y = pointsRef[i].y;
-			point.z = 0;
-			pointsRef3D.push_back(point);
-		}
-		for (int i = 0; i < pointsLive.size(); i++) {
-			Point3f point;
-			point.x = pointsLive[i].x;
-			point.y = pointsLive[i].y;
-			point.z = 0;
-			pointsLive3D.push_back(point);
-		}
+		warpPerspective(src_unwarped, out, homo, ref.size());
+		imshow("out", out);
 
-		Mat rvecRef, tvecRef;
-		Mat rvecLive, tvecLive;
-		solvePnP(pointsRef3D, pointsRef, K, D, rvecRef, tvecRef);
-		solvePnP(pointsLive3D, pointsLive, K, D, rvecLive, tvecLive);
+		//vector<Point3f> pointsRef3D, pointsLive3D;
 
-		Mat R_1to2, t_1to2;
-		Mat RRef, RLive;
-		Rodrigues(rvecRef, RRef);
-		Rodrigues(rvecLive, RLive);
+		//for (int i = 0; i < pointsRef.size(); i++) {
+		//	Point3f point;
+		//	point.x = pointsRef[i].x;
+		//	point.y = pointsRef[i].y;
+		//	point.z = 0;
+		//	pointsRef3D.push_back(point);
+		//}
+		//for (int i = 0; i < pointsLive.size(); i++) {
+		//	Point3f point;
+		//	point.x = pointsLive[i].x;
+		//	point.y = pointsLive[i].y;
+		//	point.z = 0;
+		//	pointsLive3D.push_back(point);
+		//}
 
-		computeC2MC1(RRef, tvecRef, RLive, tvecLive, R_1to2, t_1to2);
+		//Mat rvecRef, tvecRef;
+		//Mat rvecLive, tvecLive;
+		//solvePnP(pointsRef3D, pointsRef, K, D, rvecRef, tvecRef);
+		//solvePnP(pointsLive3D, pointsLive, K, D, rvecLive, tvecLive);
 
-		Mat rvec_1to2;
-		Rodrigues(R_1to2, rvec_1to2);
+		//Mat R_1to2, t_1to2;
+		//Mat RRef, RLive;
+		//Rodrigues(rvecRef, RRef);
+		//Rodrigues(rvecLive, RLive);
+
+		//computeC2MC1(RRef, tvecRef, RLive, tvecLive, R_1to2, t_1to2);
+
+		//Mat rvec_1to2;
+		//Rodrigues(R_1to2, rvec_1to2);
 		//cout << endl << "I MIGHT BE DISPLACEMENT: Mat: " << R_1to2 << endl;
 		//cout << endl << "I MIGHT BE DISPLACEMENT : vector: " << rvec_1to2 << endl;
-		cout << endl << rvec_1to2.at<double>(0, 0) << "    " << rvec_1to2.at<double>(0, 1) << "    " << rvec_1to2.at<double>(0, 2) << endl;
+
+		//DISPLACMENT
+		//cout << endl << rvec_1to2.at<double>(0, 0) << "    " << rvec_1to2.at<double>(0, 1) << "    " << rvec_1to2.at<double>(0, 2) << endl;
 
 		//Mat normalTemp = (Mat_<double>(3, 1) << 0, 0, 1);
 		//Mat normal = RRef * normalTemp;

@@ -33,11 +33,11 @@ Mat computeHomography(const Mat &R_1to2, const Mat &tvec_1to2, const double d_in
 
 int main(int argc, char** argv) {
 	Mat img1Reg;
-	Mat img1 = imread("lower.jpg");
-	Mat img2 = imread("upper.jpg");
+	Mat img1 = imread("IMG_1365.JPG");
+	Mat img2 = imread("image.png");
 	//resize(img1, img1, Size(), .25, .25);
-	resize(img1, img1, Size(), .25, .25);
-	resize(img2, img2, Size(), .25, .25);
+	//resize(img1, img1, Size(), .25, .25);
+	//resize(img2, img2, Size(), .25, .25);
 
 	Mat K = (Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
 	Mat D = (Mat_<double>(1, 4) << 0, 0, 0, 0);
@@ -101,10 +101,10 @@ int main(int argc, char** argv) {
 
 	for (size_t i = 0; i < matches.size(); i++) {
 		points1.push_back(keypoints1[matches[i].queryIdx].pt);
-		points2.push_back(keypoints2[matches[i].queryIdx].pt);
+		points2.push_back(keypoints2[matches[i].trainIdx].pt);
 	}
 
-	vector<Point3f> points13D, points23D;
+	/*vector<Point3f> points13D, points23D;
 
 	for (int i = 0; i < points1.size(); i++) {
 		Point3f point; 
@@ -164,11 +164,11 @@ int main(int argc, char** argv) {
 
 	cout << "homo_dist: " << endl <<  homo_dist << endl;
 	homo /= homo.at<double>(2, 2);
-	homo_dist /= homo_dist.at<double>(2, 2);
+	homo_dist /= homo_dist.at<double>(2, 2);*/
 
-
+	Mat homo;
 	////find homo
-	//homo = findHomography(points1, points2, RANSAC);
+	homo = findHomography(points1, points2, RANSAC);
 	//cout << "THE SIZE OF HOMO" << homo.size() << endl;
 
 	cout << "homo is: " << endl << homo << endl;
