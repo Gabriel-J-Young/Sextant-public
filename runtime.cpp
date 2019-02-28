@@ -30,7 +30,7 @@ Mat computeHomography(const Mat &R_1to2, const Mat &tvec_1to2, const double d_in
 	return homography;
 }
 
-void cameraPoseFromHomography(Mat homography, Mat& pose) {
+void cameraPoseFromHomography(const Mat& homography, Mat& pose) {
 	//eye is col then rows. yes, it's retarded
 	pose = Mat::eye(3, 4, CV_32FC1);
 	float norm1 = (float)norm(homography.col(0));
@@ -54,8 +54,8 @@ void cameraPoseFromHomography(Mat homography, Mat& pose) {
 	Mat c2 = pose.col(2); // Pointer to third column of pose
 	p3.copyTo(c2); // Third column is the crossproduct of columns one and two
 
-
-	pose.col(3) = homography.col(3) / tnorm; //vector t [R|t] is the last column of pose
+	pose.col(3) = homography.col(2) / tnorm; //vector t [R|t] is the last column of pose
+	cout << pose << endl;
 }
 
 void warpWithHomography(float GOOD_MATCH_PERCENT, Mat src_unwarped, Mat ref, Mat &out) {
@@ -94,11 +94,8 @@ void warpWithHomography(float GOOD_MATCH_PERCENT, Mat src_unwarped, Mat ref, Mat
 
 	homography = findHomography(pointsRef, pointsLive, RANSAC);
 	Mat pose;
-	cout << "me!" << endl;
-	//it break here
+	//it break here 
 	cameraPoseFromHomography(homography, pose);
-	cout << "you!" << endl;
-	cout << pose << endl;
 	warpPerspective(src_unwarped, out, homography, ref.size());
 
 }
