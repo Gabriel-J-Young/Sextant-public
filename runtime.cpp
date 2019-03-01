@@ -62,18 +62,14 @@ void cameraPoseFromHomography(const Mat& homography, Mat& pose) {
 	//cout << pose.col(3) << endl;
 }
 
-void homographyPerspectiveWarp(float GOOD_MATCH_PERCENT, Mat src_unwarped, Mat ref, Mat& homography ,Mat &img_warpedToPerspective) {
-	resize(src_unwarped, src_unwarped, Size(), .5, .5);
-	resize(ref, ref, Size(), .5, .5);
-	vector<KeyPoint> keypointsLive, keypointsRef;
+void keypointMatches(float GOOD_MATCH_PERCENT, vector<KeyPoint> keypointsRef, Mat descriptorsRef, Mat src_unwarped, Mat ref, Mat& img_matches, vector<Point2f>& pointsRef, vector<Point2f>& pointsLive) {
+	vector<KeyPoint> keypointsLive;
 	vector<DMatch> matches;
-	vector<Point2f> pointsRef, pointsLive;
-	Mat descriptorsLive, descriptorsRef;
+	Mat descriptorsLive;
 
 	// detect orb features and compute descriptors.
 	Ptr<Feature2D> orb = ORB::create();
 	orb->detectAndCompute(src_unwarped, Mat(), keypointsLive, descriptorsLive);
-	orb->detectAndCompute(ref, Mat(), keypointsRef, descriptorsRef);
 
 	//Matcher
 	Ptr<BFMatcher> matcher = BFMatcher::create(NORM_HAMMING, true);
@@ -86,15 +82,35 @@ void homographyPerspectiveWarp(float GOOD_MATCH_PERCENT, Mat src_unwarped, Mat r
 	const int numGoodMatches = matches.size() * GOOD_MATCH_PERCENT;
 	matches.erase(matches.begin() + numGoodMatches, matches.end());
 
-	Mat imMatches;
-	drawMatches(ref, keypointsRef, src_unwarped, keypointsLive, matches, imMatches);
-	imshow("THE LINES", imMatches);
+	resize(ref, ref, Size(), .5, .5);
+	resize(src_unwarped, src_unwarped, Size(), .5, .5);
+
+	drawMatches(ref, keypointsRef, src_unwarped, keypointsLive, matches, img_matches);
 
 	//get location of good matches 
 	for (size_t i = 0; i < matches.size(); i++) {
 		pointsRef.push_back(keypointsRef[matches[i].queryIdx].pt);
 		pointsLive.push_back(keypointsLive[matches[i].trainIdx].pt);
 	}
+}
+
+void displacement(vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat K, Mat D, Mat& rvec, Mat& tvec) {
+	vector<Point3f> pointsRef3D;
+
+	for (int i = 0; i < pointsRef.size(); i++) {
+		Point3d point;
+		point.x = (float)pointsRef[i].x;
+		point.y = (float)pointsRef[i].y;
+		point.z = 1.0f;
+		pointsRef3D.push_back(point);
+	}
+
+	solvePnPRansac(pointsRef3D, pointsLive, K, D, rvec, tvec);
+}
+
+void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat src_unwarped, Mat ref, Mat& homography, Mat &img_warpedToPerspective) {
+	resize(src_unwarped, src_unwarped, Size(), .5, .5);
+	resize(ref, ref, Size(), .5, .5);
 
 	homography = findHomography(pointsRef, pointsLive, RANSAC);
 	
@@ -103,17 +119,18 @@ void homographyPerspectiveWarp(float GOOD_MATCH_PERCENT, Mat src_unwarped, Mat r
 	//two people on stack overflow thread say this answer is trash
 	//cameraPoseFromHomography(homography, pose);
 	warpPerspective(src_unwarped, img_warpedToPerspective, homography, ref.size());
-
 }
 
 
 int main(int argc, char** argv)
 {
-	const float GOOD_MATCH_PERCENT = 0.20f;
+	const float GOOD_MATCH_PERCENT = 0.5f;
 	Mat src; Mat src_unwarped; 
 	Mat newCamMatForUndistort;
 	Mat map1, map2;
 	Mat ref;
+	Mat descriptorsRef;
+	vector<KeyPoint> keypointsRef;
 
 	//Open default camera
 	VideoCapture cap(0);
@@ -202,6 +219,9 @@ int main(int argc, char** argv)
 	imshow("first unwarp", src_unwarped);
 	imshow("ok", ref);
 
+	Ptr<Feature2D> orb = ORB::create();
+	orb->detectAndCompute(ref, Mat(), keypointsRef, descriptorsRef);
+
 	/// detect orb features and compute descriptors.
 	//Ptr<Feature2D> orb = ORB::create();
 	//orb->detectAndCompute(img1, Mat(), keypoints1, descriptors1);
@@ -218,8 +238,9 @@ int main(int argc, char** argv)
 
 	while (true)
 	{
-		Mat img_warpedToPerspective, homography;
+		Mat img_warpedToPerspective, homography, img_matches, rvec, tvec;
 		vector<Mat> rotations, translations, normals;
+		vector<Point2f> pointsRef, pointsLive;
 		// read a new frame from video breaking the while loop if the frames cannot be captured
 		bSuccess = cap.read(src);
 		if (bSuccess == false)
@@ -234,17 +255,30 @@ int main(int argc, char** argv)
 		//remaps the Mat accoring to unwarping data from "fisheye::initUndistortRectifyMap"
 		remap(src, src_unwarped, map1, map2, cv::INTER_LINEAR);
 
-		homographyPerspectiveWarp(GOOD_MATCH_PERCENT, src_unwarped, ref, homography, img_warpedToPerspective);
-		imshow("out", img_warpedToPerspective);
+		keypointMatches(GOOD_MATCH_PERCENT, keypointsRef, descriptorsRef, src_unwarped, ref, img_matches, pointsRef, pointsLive);
+		imshow("THE LINES", img_matches);
+
+		displacement(pointsRef, pointsLive, K, D, rvec, tvec);
+
+		homographyPerspectiveWarp(pointsRef, pointsLive, src_unwarped, ref, homography, img_warpedToPerspective);
+		imshow("img_warpedToPerspective", img_warpedToPerspective);
 
 		//now, I'm trying this: https://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#int%20decomposeHomographyMat%28InputArray%20H,%20InputArray%20K,%20OutputArrayOfArrays%20rotations,%20OutputArrayOfArrays%20translations,%20OutputArrayOfArrays%20normals%29
 		//the data generated by this function might be useful. show to jeff
 		//there should be a better way with less uncertainty
 		//also the opencv tutorials indicate we should ne using solvePnP for camera pose
+		/*
 		decomposeHomographyMat(homography, K, rotations, translations, normals);
-		for (auto &Mat : rotations) {
-			cout << endl << Mat << endl;
+		//change to auto and &Mat if this dont work also rename rotMat in cout
+		for (Mat &rotMat : rotations) {
+			//cout << "rot Mat: " << endl << rotMat << endl;
+			cout << "rot Mat vector: " << sum(rotMat) << endl; 
 		}
+		for (Mat &transMat : translations) {
+			//cout << endl << "trans Mat: " << transMat << endl;
+			cout << "trans Mat vector: " << sum(transMat) << endl;
+		}
+		*/
 
 		//wait for 1 ms until any key is pressed.  
 		//If the 'Esc' key is pressed, break the while loop.
