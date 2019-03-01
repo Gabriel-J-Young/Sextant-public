@@ -66,10 +66,14 @@ void keypointMatches(float GOOD_MATCH_PERCENT, vector<KeyPoint> keypointsRef, Ma
 	vector<KeyPoint> keypointsLive;
 	vector<DMatch> matches;
 	Mat descriptorsLive;
+	Mat img_keypointsLive;
 
 	// detect orb features and compute descriptors.
 	Ptr<Feature2D> orb = ORB::create();
 	orb->detectAndCompute(src_unwarped, Mat(), keypointsLive, descriptorsLive);
+
+	drawKeypoints(src_unwarped, keypointsLive, img_keypointsLive, Scalar(0, 0, 255));
+	imshow("better keypoints?", img_keypointsLive);
 
 	//Matcher
 	Ptr<BFMatcher> matcher = BFMatcher::create(NORM_HAMMING, true);
@@ -106,6 +110,8 @@ void displacement(vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat K, 
 	}
 
 	solvePnPRansac(pointsRef3D, pointsLive, K, D, rvec, tvec);
+	cout << "your rotation: " << sum(rvec) << endl;
+	cout << "your translation: " << sum(tvec) << endl;
 }
 
 void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat src_unwarped, Mat ref, Mat& homography, Mat &img_warpedToPerspective) {
@@ -124,7 +130,7 @@ void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> point
 
 int main(int argc, char** argv)
 {
-	const float GOOD_MATCH_PERCENT = 0.5f;
+	const float GOOD_MATCH_PERCENT = 0.1f;
 	Mat src; Mat src_unwarped; 
 	Mat newCamMatForUndistort;
 	Mat map1, map2;
@@ -179,14 +185,6 @@ int main(int argc, char** argv)
 	cap.read(src);
 	cap.read(src);
 	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-
 
 	bSuccess = cap.read(src);
 	if (bSuccess == false)
@@ -222,6 +220,9 @@ int main(int argc, char** argv)
 	Ptr<Feature2D> orb = ORB::create();
 	orb->detectAndCompute(ref, Mat(), keypointsRef, descriptorsRef);
 
+	Mat img_keypointsRef;
+	drawKeypoints(src_unwarped, keypointsRef, img_keypointsRef, Scalar(255, 0, 0));
+
 	/// detect orb features and compute descriptors.
 	//Ptr<Feature2D> orb = ORB::create();
 	//orb->detectAndCompute(img1, Mat(), keypoints1, descriptors1);
@@ -238,6 +239,7 @@ int main(int argc, char** argv)
 
 	while (true)
 	{
+		imshow("ref keys: ", img_keypointsRef);
 		Mat img_warpedToPerspective, homography, img_matches, rvec, tvec;
 		vector<Mat> rotations, translations, normals;
 		vector<Point2f> pointsRef, pointsLive;
