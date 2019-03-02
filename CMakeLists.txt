@@ -15,3 +15,6 @@ target_link_libraries(setup ${OpenCV_LIBS})
 
 add_executable (runtime runtime.cpp)
 target_link_libraries(runtime ${OpenCV_LIBS})
+
+add_executable (refVideoWriter refVideoWriter.cpp)
+target_link_libraries(refVideoWriter ${OpenCV_LIBS})

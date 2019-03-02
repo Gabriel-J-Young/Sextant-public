@@ -1,7 +1,4 @@
-#include <opencv2/opencv.hpp>
-#include <iostream>
-#include "opencv2/features2d.hpp"
-#include "opencv2/xfeatures2d.hpp"
+#include "runtime.h"
 
 using namespace cv;
 using namespace cv::xfeatures2d;
@@ -98,6 +95,85 @@ void keypointMatches(float GOOD_MATCH_PERCENT, vector<KeyPoint> keypointsRef, Ma
 	}
 }
 
+void videoKeypointMatches(float GOOD_MATCH_PERCENT, vector<vector<KeyPoint>> videoKeypointsRef, vector<Mat> videoDescriptorsRef, Mat src_unwarped, vector<vector<Point2f>>& videoPointsRef, vector<vector<Point2f>>& videoPointsLive) {
+	VideoWriter video("vid_matches.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10.0f, Size(1920, 1080));
+	vector<KeyPoint> keypointsLive;
+	vector<vector<DMatch>> matches;
+	Mat descriptorsLive;
+	Mat img_keypointsLive;
+
+	// detect orb features and compute descriptors.
+	Ptr<Feature2D> orb = ORB::create();
+	orb->detectAndCompute(src_unwarped, Mat(), keypointsLive, descriptorsLive);
+
+	drawKeypoints(src_unwarped, keypointsLive, img_keypointsLive, Scalar(0, 0, 255));
+	imshow("live keypoints", img_keypointsLive);
+	
+	for (int i = 0; i < videoDescriptorsRef.size(); i++) {
+		//Matcher
+		vector<DMatch> someMatches;
+		Ptr<BFMatcher> matcher = BFMatcher::create(NORM_HAMMING, true);
+		matcher->match(videoDescriptorsRef[i], descriptorsLive, someMatches);
+		matches.push_back(someMatches);
+	}
+
+	//sorts match vectors by number of matches
+	sort(matches.begin(), matches.end(), vectorBigToSmall);
+
+	const int numGoodMatchVectors = matches.size() * .5f;
+	matches.erase(matches.begin() + numGoodMatchVectors, matches.end());
+
+	for (int i = 0; i < matches.size(); i++) {
+		//sorts matches by confidence level
+		sort(matches[i].begin(), matches[i].end());
+
+		//kills bad matches
+		const int numGoodMatches = matches[i].size() * GOOD_MATCH_PERCENT;
+		matches[i].erase(matches[i].begin() + numGoodMatches, matches[i].end());
+	}
+
+	//get location of good matches 
+	for (size_t j = 0; j < matches.size(); j++) {
+		vector<Point2f> videoPointsRefFrame;
+		vector<Point2f> videoPointsLiveFrame;
+		for (size_t i = 0; i < matches[j].size(); i++) {
+			videoPointsRefFrame.push_back(videoKeypointsRef[j][matches[j][i].queryIdx].pt);
+			videoPointsLiveFrame.push_back(keypointsLive[matches[j][i].trainIdx].pt);
+		}
+		videoPointsRef.push_back(videoPointsRefFrame);
+		videoPointsLive.push_back(videoPointsLiveFrame);
+		videoPointsRefFrame.clear();
+		videoPointsLiveFrame.clear();
+	}
+}
+
+int refVideoProcessor(vector<vector<KeyPoint>>& refVideoKeypoints,  vector<Mat>& refVideoDescriptors) {
+	VideoWriter video("vid_ref_keypoints.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10.0f, Size(1920, 1080));
+	VideoCapture cap("vid_ref.avi");
+	if (!cap.isOpened()) {
+		cout << "Could not open reference video" << endl;
+		return -1;
+	}
+
+	for (int i = 0; i < cap.get(CAP_PROP_FRAME_COUNT); i++){
+		Mat frame;
+		cap >> frame;
+		if (frame.empty()) {
+			break;
+		}
+
+	Ptr<Feature2D> orb = ORB::create();
+	vector<KeyPoint> keypoints;
+	Mat descriptors;
+	orb->detectAndCompute(frame, Mat(), keypoints, descriptors);
+
+	drawKeypoints(frame, keypoints, frame, Scalar(0, 255, 0));
+	video.write(frame);
+	refVideoKeypoints.push_back(keypoints);
+	refVideoDescriptors.push_back(descriptors);
+	}
+}
+
 void displacement(vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat K, Mat D, Mat& rvec, Mat& tvec) {
 	vector<Point3f> pointsRef3D;
 
@@ -110,8 +186,8 @@ void displacement(vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat K, 
 	}
 
 	solvePnPRansac(pointsRef3D, pointsLive, K, D, rvec, tvec);
-	cout << "your rotation: " << sum(rvec) << endl;
-	cout << "your translation: " << sum(tvec) << endl;
+	cout << "rotation vector length: " << sum(rvec) << endl;
+	cout << "translation vector length: " << sum(tvec) << endl;
 }
 
 void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat src_unwarped, Mat ref, Mat& homography, Mat &img_warpedToPerspective) {
@@ -128,8 +204,8 @@ void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> point
 }
 
 
-int main(int argc, char** argv)
-{
+
+int main(int argc, char** argv) {
 	const float GOOD_MATCH_PERCENT = 0.1f;
 	Mat src; Mat src_unwarped; 
 	Mat newCamMatForUndistort;
@@ -138,6 +214,7 @@ int main(int argc, char** argv)
 	Mat descriptorsRef;
 	vector<KeyPoint> keypointsRef;
 
+	
 	//Open default camera
 	VideoCapture cap(0);
 
@@ -168,23 +245,6 @@ int main(int argc, char** argv)
 
 	//spam these to get a later frame. there doesn't seem to be a better way
 	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
-	cap.read(src);
 
 	bSuccess = cap.read(src);
 	if (bSuccess == false)
@@ -196,11 +256,13 @@ int main(int argc, char** argv)
 	cout << "Camera open!" << endl;
 
 	Size image_size = src.size();
-	//camera unwarping
+	//generates undistortions maps from first frame
 	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
 	fisheye::initUndistortRectifyMap(K, D, Matx33d::eye(), newCamMatForUndistort, image_size, CV_16SC2, map1, map2);
+	
 	remap(src, src_unwarped, map1, map2, cv::INTER_LINEAR);
 
+	/*
 	//writing a referance image
 	cout << "do you want to write a referance image? (y/n)";
 	string a;
@@ -216,30 +278,22 @@ int main(int argc, char** argv)
 	resize(src_unwarped, src_unwarped, Size(), .5, .5);
 	imshow("first unwarp", src_unwarped);
 	imshow("ok", ref);
+	*/
+
+	vector<vector<KeyPoint>> refVideoKeypoints;
+	vector<Mat> refVideoDescriptors;
+	refVideoProcessor(refVideoKeypoints, refVideoDescriptors);
 
 	Ptr<Feature2D> orb = ORB::create();
 	orb->detectAndCompute(ref, Mat(), keypointsRef, descriptorsRef);
 
-	Mat img_keypointsRef;
-	drawKeypoints(src_unwarped, keypointsRef, img_keypointsRef, Scalar(255, 0, 0));
+	//Mat img_keypointsRef;
+	//drawKeypoints(src_unwarped, keypointsRef, img_keypointsRef, Scalar(255, 0, 0));
 
-	/// detect orb features and compute descriptors.
-	//Ptr<Feature2D> orb = ORB::create();
-	//orb->detectAndCompute(img1, Mat(), keypoints1, descriptors1);
-	//orb->detectAndCompute(img2, Mat(), keypoints2, descriptors2);
-
-	/*
-	//GFTT-Brief Method
-	Ptr<GFTTDetector> detector = GFTTDetector::create();
-	detector->detect(ref, keypointsRef);
-
-	Ptr<BriefDescriptorExtractor> extractor = BriefDescriptorExtractor::create();
-	extractor->compute(ref, keypointsRef, descriptorsRef);
-	*/
 
 	while (true)
 	{
-		imshow("ref keys: ", img_keypointsRef);
+		//imshow("ref keys: ", img_keypointsRef);
 		Mat img_warpedToPerspective, homography, img_matches, rvec, tvec;
 		vector<Mat> rotations, translations, normals;
 		vector<Point2f> pointsRef, pointsLive;
@@ -252,18 +306,47 @@ int main(int argc, char** argv)
 			cin.get();
 			break;
 		}
-		imshow("before", src);
+
+		//imshow("before", src);
 
 		//remaps the Mat accoring to unwarping data from "fisheye::initUndistortRectifyMap"
 		remap(src, src_unwarped, map1, map2, cv::INTER_LINEAR);
 
-		keypointMatches(GOOD_MATCH_PERCENT, keypointsRef, descriptorsRef, src_unwarped, ref, img_matches, pointsRef, pointsLive);
-		imshow("THE LINES", img_matches);
+		//keypointMatches(GOOD_MATCH_PERCENT, keypointsRef, descriptorsRef, src_unwarped, ref, img_matches, pointsRef, pointsLive);
+		//imshow("THE LINES", img_matches);
 
-		displacement(pointsRef, pointsLive, K, D, rvec, tvec);
+		vector<vector<Point2f>> videoPointsRef;
+		vector<vector<Point2f>> videoPointsLive;
+		videoKeypointMatches(GOOD_MATCH_PERCENT, refVideoKeypoints, refVideoDescriptors, src_unwarped, videoPointsRef, videoPointsLive);
+		//assume rvec is 3 col and one row
+		Mat sum_rvec = Mat::zeros(Size(3, 1), CV_64FC1);
+		Mat sum_tvec = Mat::zeros(Size(3, 1), CV_64FC1);
 
-		homographyPerspectiveWarp(pointsRef, pointsLive, src_unwarped, ref, homography, img_warpedToPerspective);
-		imshow("img_warpedToPerspective", img_warpedToPerspective);
+		cout << "videoPointsRef.size()" << videoPointsRef.size() << endl;
+		for (int i = 0; i < videoPointsRef.size(); i++) {
+			displacement(videoPointsRef[i], videoPointsLive[i], K, D, rvec, tvec);
+			sum_rvec.at<float>(0, 0) += rvec.at<float>(0, 0);
+			sum_rvec.at<float>(1, 0) += rvec.at<float>(1, 0);
+			sum_rvec.at<float>(2, 0) += rvec.at<float>(2, 0);
+
+			sum_tvec.at<float>(0, 0) += tvec.at<float>(0, 0);
+			sum_tvec.at<float>(1, 0) += tvec.at<float>(1, 0);
+			sum_tvec.at<float>(2, 0) += tvec.at<float>(2, 0);
+		}
+
+		cout << "sum_rvec: " << sum_rvec << endl;
+		cout << "sum_tvec: " << sum_tvec << endl;
+
+		sum_rvec /= videoPointsRef.size();
+		sum_tvec /= videoPointsRef.size();
+
+
+		cout << "average rotation vector lenght: " << sum(sum_rvec) << endl;
+		cout << "average translation vector lenght: " << sum(sum_tvec) << endl;
+		//displacement(pointsRef, pointsLive, K, D, rvec, tvec);
+
+		//homographyPerspectiveWarp(pointsRef, pointsLive, src_unwarped, ref, homography, img_warpedToPerspective);
+		//imshow("img_warpedToPerspective", img_warpedToPerspective);
 
 		//now, I'm trying this: https://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#int%20decomposeHomographyMat%28InputArray%20H,%20InputArray%20K,%20OutputArrayOfArrays%20rotations,%20OutputArrayOfArrays%20translations,%20OutputArrayOfArrays%20normals%29
 		//the data generated by this function might be useful. show to jeff
