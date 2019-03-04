@@ -45,10 +45,11 @@ int main(int argc, char** argv) {
 
 	VideoWriter video("vid_ref.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10.0f, Size(dWidth, dHeight));
 
-	cout << "how many seconds?" << endl;
+	//no endl here for user input
+	cout << "how many seconds: ";
 	int seconds;
 	cin >> seconds;
-	cout << "writing a " << seconds << "second video" << endl;
+	cout << endl << "writing a " << seconds << " second video" << endl;
 	for (int i = 0; i < seconds * 10; i++) {
 		Mat frame;
 		cap >> frame;
