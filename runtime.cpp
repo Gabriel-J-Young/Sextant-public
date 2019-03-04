@@ -6,7 +6,7 @@ using namespace std;
 
 
 void videoKeypointMatches(float GOOD_MATCH_PERCENT, vector<KeyPoint> videoKeypointsRef, Mat videoDescriptorsRef, Mat src_unwarped, Mat best_frame, vector<Point2f>& videoPointsRef, vector<Point2f>& videoPointsLive) {
-	VideoWriter video("vid_matches.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10.0f, Size(1920, 1080));
+	//VideoWriter video("vid_matches.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10.0f, Size(1920, 1080));
 	vector<KeyPoint> keypointsLive;
 	vector<DMatch> matches;
 	Mat descriptorsLive;
