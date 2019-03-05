@@ -106,6 +106,10 @@ int refVideoProcessor(vector<KeyPoint>& refVideoKeypoints,  Mat& refVideoDescrip
 	return 0;
 }
 
+int videoToVectorOfMats() {
+	return 0;
+}
+
 void displacement(vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat K, Mat D, Mat& rvec, Mat& tvec) {
 	vector<Point3f> pointsRef3D;
 

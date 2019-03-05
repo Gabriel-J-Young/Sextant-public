@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 	Mat map1, map2;
 
 	//Open default camera
-	VideoCapture cap(0);
+	VideoCapture cap(4);
 
 	if (cap.isOpened() == false)
 	{
@@ -43,7 +43,16 @@ int main(int argc, char** argv) {
 	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
 	fisheye::initUndistortRectifyMap(K, D, Matx33d::eye(), newCamMatForUndistort, image_size, CV_16SC2, map1, map2);
 
-	VideoWriter video("vid_ref.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10.0f, Size(dWidth, dHeight));
+	cout << "Video name (.avi is added automatically): ";
+	string nameIn;
+	cin >> nameIn;
+	stringstream nameS;
+	nameS << nameIn << ".avi";
+	string name = nameS.str();
+	cout << name << endl;
+
+
+	VideoWriter video(name, VideoWriter::fourcc('M', 'J', 'P', 'G'), 10, Size(dWidth, dHeight));
 
 	//no endl here for user input
 	cout << "how many seconds: ";
@@ -62,6 +71,7 @@ int main(int argc, char** argv) {
 		video.write(frame);
 	}
 	video.release();
-	cout << "wrote a video!" << endl;
+	cout << "wrote a " << seconds << " second video called: " << name << endl;
+	waitKey(50000);
 	return 0;
 }
