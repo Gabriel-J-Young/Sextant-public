@@ -18,3 +18,6 @@ target_link_libraries(runtime ${OpenCV_LIBS})
 
 add_executable (refVideoWriter refVideoWriter.cpp)
 target_link_libraries(refVideoWriter ${OpenCV_LIBS})
+
+add_executable (bestFrame bestFrame.cpp)
+target_link_libraries(bestFrame ${OpenCV_LIBS})

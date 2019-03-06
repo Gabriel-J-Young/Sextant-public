@@ -71,7 +71,7 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, vector<KeyPoint> videoKeypoi
 }
 
 int refVideoProcessor(vector<KeyPoint>& refVideoKeypoints,  Mat& refVideoDescriptors, Mat& best_frame) {
-	VideoWriter video("vid_ref_keypoints.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10.0f, Size(1920, 1080));
+	//VideoWriter video("vid_ref_keypoints.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10.0f, Size(1920, 1080));
 	VideoCapture cap("vid_ref.avi");
 	Ptr<Feature2D> orb = ORB::create();
 	if (!cap.isOpened()) {
@@ -79,7 +79,7 @@ int refVideoProcessor(vector<KeyPoint>& refVideoKeypoints,  Mat& refVideoDescrip
 		return -1;
 	}
 
-	for (int i = 0; i < cap.get(CAP_PROP_FRAME_COUNT); i++){
+	for (int i = 0; i < cap.get(CAP_PROP_FRAME_COUNT); i++) {
 		Mat frame;
 		cap >> frame;
 		if (frame.empty()) {
@@ -98,10 +98,10 @@ int refVideoProcessor(vector<KeyPoint>& refVideoKeypoints,  Mat& refVideoDescrip
 	if (best_frame.empty()) {
 		cout << "best frame is empty!" << endl;
 	}
-	Mat keypoint_frame;
-	drawKeypoints(best_frame, refVideoKeypoints, keypoint_frame, Scalar(255, 255, 0));
-	imwrite("Keypoint_frame.png", keypoint_frame);
-	video.write(frame);
+	//Mat keypoint_frame;
+	//drawKeypoints(best_frame, refVideoKeypoints, keypoint_frame, Scalar(255, 255, 0));
+	//imwrite("Keypoint_frame.png", keypoint_frame);
+	//video.write(frame);
 	}
 	return 0;
 }

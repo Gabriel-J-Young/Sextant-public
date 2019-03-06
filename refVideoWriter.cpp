@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 	Mat map1, map2;
 
 	//Open default camera
-	VideoCapture cap(4);
+	VideoCapture cap(0);
 
 	if (cap.isOpened() == false)
 	{
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 	string nameIn;
 	cin >> nameIn;
 	stringstream nameS;
-	nameS << nameIn << ".avi";
+	nameS << "./setup_videos/" << nameIn << ".avi";
 	string name = nameS.str();
 	cout << name << endl;
 
@@ -62,7 +62,6 @@ int main(int argc, char** argv) {
 	for (int i = 0; i < seconds * 10; i++) {
 		Mat frame;
 		cap >> frame;
-
 		if (frame.empty()) {
 			break;
 		}
