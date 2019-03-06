@@ -70,6 +70,7 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, vector<KeyPoint> videoKeypoi
 	*/
 }
 
+/*
 int refVideoProcessor(vector<KeyPoint>& refVideoKeypoints,  Mat& refVideoDescriptors, Mat& best_frame) {
 	//VideoWriter video("vid_ref_keypoints.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10.0f, Size(1920, 1080));
 	VideoCapture cap("vid_ref.avi");
@@ -105,10 +106,7 @@ int refVideoProcessor(vector<KeyPoint>& refVideoKeypoints,  Mat& refVideoDescrip
 	}
 	return 0;
 }
-
-int videoToVectorOfMats() {
-	return 0;
-}
+*/
 
 void displacement(vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat K, Mat D, Mat& rvec, Mat& tvec) {
 	vector<Point3f> pointsRef3D;
@@ -150,8 +148,21 @@ int main(int argc, char** argv) {
 	vector<KeyPoint> keypointsRef;
 	vector<KeyPoint> refVideoKeypoints;
 	Mat refVideoDescriptors;
+	vector<String> best_frames_names;
+	vector<Mat> best_frames;
 
-	
+
+	//check glob and the for loop for bugs
+	glob("./setup_images/*.png", best_frames_names, false);
+
+	for (int i = 0; i < best_frames_names.size(); i++) {
+		stringstream pathS;
+		pathS << "./setup_images/" << i << ".png";
+		string path = pathS.str();
+		best_frame.push_back(imread(path));
+
+	}
+
 	//Open default camera
 	VideoCapture cap(0);
 
@@ -198,8 +209,6 @@ int main(int argc, char** argv) {
 	fisheye::initUndistortRectifyMap(K, D, Matx33d::eye(), newCamMatForUndistort, image_size, CV_16SC2, map1, map2);
 	
 	remap(src, src_unwarped, map1, map2, cv::INTER_LINEAR);
-
-	refVideoProcessor(refVideoKeypoints, refVideoDescriptors, best_frame);
 
 	while (true)
 	{
