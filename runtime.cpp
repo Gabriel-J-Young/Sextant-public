@@ -5,25 +5,50 @@ using namespace cv::xfeatures2d;
 using namespace std;
 
 
-void videoKeypointMatches(float GOOD_MATCH_PERCENT, vector<KeyPoint> videoKeypointsRef, Mat videoDescriptorsRef, Mat src_unwarped, Mat best_frame, vector<Point2f>& videoPointsRef, vector<Point2f>& videoPointsLive) {
-	//VideoWriter video("vid_matches.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10.0f, Size(1920, 1080));
+void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat> best_frames, int& frameIdx, Mat& win_frame, vector<Point2f>& videoPointsRef, vector<Point2f>& videoPointsLive) {
+	vector<KeyPoint> keypointsRef;
+	Mat descriptorsRef;
+	Mat img_keypointsRef;
+
 	vector<KeyPoint> keypointsLive;
-	vector<DMatch> matches;
 	Mat descriptorsLive;
 	Mat img_keypointsLive;
+
+	vector<DMatch> matches;
 	Mat THELINES_V;
 
-	// detect orb features and compute descriptors.
+	//create feature detector
 	Ptr<Feature2D> orb = ORB::create();
+
+	//create Matcher
+	Ptr<BFMatcher> matcher = BFMatcher::create(NORM_HAMMING, true);
+
+	// detect orb features and compute descriptors for live frame.
 	orb->detectAndCompute(src_unwarped, Mat(), keypointsLive, descriptorsLive);
 
+	//draws and shows keypoints of live frame
 	drawKeypoints(src_unwarped, keypointsLive, img_keypointsLive, Scalar(0, 0, 255));
 	imshow("live keypoints", img_keypointsLive);
+
+	for (int i = 0; i < best_frames.size(); i++) {
+		vector<KeyPoint> temp_keypointsRef;
+		Mat temp_desciptorsRef;
+		vector<DMatch> temp_matches;
+
+		orb->detectAndCompute(best_frames[i], Mat(), temp_keypointsRef, temp_desciptorsRef);
+		matcher->match(temp_desciptorsRef, descriptorsLive, temp_matches);
+
+		if (temp_matches.size() > matches.size()) {
+			matches = temp_matches;
+			keypointsRef = temp_keypointsRef;
+			descriptorsRef = temp_desciptorsRef;
+			frameIdx = i;
+			win_frame = best_frames[i];
+		}
+	}
 	
-	//Matcher
-	Ptr<BFMatcher> matcher = BFMatcher::create(NORM_HAMMING, true);
-	matcher->match(videoDescriptorsRef, descriptorsLive, matches);
-	//sorts by confidence level
+	
+	//sort by confidence level
 	sort(matches.begin(), matches.end());
 
 	const int numGoodMatches = matches.size() * GOOD_MATCH_PERCENT;
@@ -31,11 +56,15 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, vector<KeyPoint> videoKeypoi
 	matches.erase(matches.begin() + numGoodMatches, matches.end());
 
 	for (size_t i = 0; i < matches.size(); i++) {
-		videoPointsRef.push_back(videoKeypointsRef[matches[i].queryIdx].pt);
+		videoPointsRef.push_back(keypointsRef[matches[i].queryIdx].pt);
 		videoPointsLive.push_back(keypointsLive[matches[i].trainIdx].pt);
 	}
 
-	drawMatches(best_frame, videoKeypointsRef, src_unwarped, keypointsLive, matches, THELINES_V);
+	if (win_frame.empty()) {
+		cout << "win_frame is empty!" << endl;
+	}
+
+	drawMatches(win_frame, keypointsRef, src_unwarped, keypointsLive, matches, THELINES_V);
 	resize(THELINES_V, THELINES_V, Size(), .5, .5);
 	imshow("THELINES_V", THELINES_V);
 	/*
@@ -136,31 +165,43 @@ void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> point
 	resize(img_warpedToPerspective, img_warpedToPerspective, Size(), .5, .5);
 }
 
+int offset(int frameIdx, Mat tvec, Mat& tvec_out) {
+	//to set tvec_out to the right size
+	tvec_out = tvec;
+	if (frameIdx = 1) {
 
+	} else if (frameIdx = 2) {
+
+	} else if (frameIdx = 3) {
+
+	}
+	else {
+		return -1;
+	}
+	return 0;
+}
 
 int main(int argc, char** argv) {
-	const float GOOD_MATCH_PERCENT = 0.1f;
-	Mat src; Mat src_unwarped; 
 	Mat newCamMatForUndistort;
 	Mat map1, map2;
-	Mat best_frame;
-	Mat descriptorsRef;
-	vector<KeyPoint> keypointsRef;
-	vector<KeyPoint> refVideoKeypoints;
-	Mat refVideoDescriptors;
+	Mat src; Mat src_unwarped;
+
+	const float GOOD_MATCH_PERCENT = 0.1f;
+
 	vector<String> best_frames_names;
 	vector<Mat> best_frames;
-
+	int frameIdx;
+	Mat win_frame;
 
 	//check glob and the for loop for bugs
 	glob("./setup_images/*.png", best_frames_names, false);
 
 	for (int i = 0; i < best_frames_names.size(); i++) {
+		Mat best_frame;
 		stringstream pathS;
 		pathS << "./setup_images/" << i << ".png";
 		string path = pathS.str();
 		best_frame.push_back(imread(path));
-
 	}
 
 	//Open default camera
@@ -212,7 +253,6 @@ int main(int argc, char** argv) {
 
 	while (true)
 	{
-		//imshow("ref keys: ", img_keypointsRef);
 		Mat img_warpedToPerspective, homography, img_matches, rvec, tvec;
 		vector<Mat> rotations, translations, normals;
 		vector<Point2f> pointsRef, pointsLive;
@@ -236,17 +276,20 @@ int main(int argc, char** argv) {
 
 		vector<Point2f> videoPointsRef;
 		vector<Point2f> videoPointsLive;
-		videoKeypointMatches(GOOD_MATCH_PERCENT, refVideoKeypoints, refVideoDescriptors, src_unwarped, best_frame, videoPointsRef, videoPointsLive);
+		videoKeypointMatches(GOOD_MATCH_PERCENT, src_unwarped, best_frames, frameIdx, win_frame, videoPointsRef, videoPointsLive);
 
 		cout << "videoPointsRef.size()" << videoPointsRef.size() << endl;
 
+		//get displacement from ref image
 		displacement(videoPointsRef, videoPointsLive, K, D, rvec, tvec);
-
 		cout << "rotation vector lenght: " << sum(rvec) << endl;
 		cout << "translation vector lenght: " << sum(tvec) << endl;
 
-		imshow("best frame: ", best_frame);
-		homographyPerspectiveWarp(videoPointsRef, videoPointsLive, best_frame, src_unwarped, homography, img_warpedToPerspective);
+		//add offset to tvec based on frameIdx
+		offset(frameIdx, tvec, tvec);
+
+		imshow("best frame: ", win_frame);
+		homographyPerspectiveWarp(videoPointsRef, videoPointsLive, win_frame, src_unwarped, homography, img_warpedToPerspective);
 		imshow("img_warpedToPerspective", img_warpedToPerspective);
 
 
