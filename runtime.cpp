@@ -4,7 +4,6 @@ using namespace cv;
 using namespace cv::xfeatures2d;
 using namespace std;
 
-
 void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat> best_frames, int& frameIdx, Mat& win_frame, vector<Point2f>& videoPointsRef, vector<Point2f>& videoPointsLive) {
 	vector<KeyPoint> keypointsRef;
 	Mat descriptorsRef;
@@ -30,6 +29,8 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 	drawKeypoints(src_unwarped, keypointsLive, img_keypointsLive, Scalar(0, 0, 255));
 	imshow("live keypoints", img_keypointsLive);
 
+	cout << "best_frame size: " << best_frames.size() << endl;;
+
 	for (int i = 0; i < best_frames.size(); i++) {
 		vector<KeyPoint> temp_keypointsRef;
 		Mat temp_desciptorsRef;
@@ -37,6 +38,7 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 
 		orb->detectAndCompute(best_frames[i], Mat(), temp_keypointsRef, temp_desciptorsRef);
 		matcher->match(temp_desciptorsRef, descriptorsLive, temp_matches);
+		cout << "temp matches: " << temp_matches.size() << endl;
 
 		if (temp_matches.size() > matches.size()) {
 			matches = temp_matches;
@@ -46,13 +48,12 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 			win_frame = best_frames[i];
 		}
 	}
-	
-	
+
 	//sort by confidence level
 	sort(matches.begin(), matches.end());
 
 	const int numGoodMatches = matches.size() * GOOD_MATCH_PERCENT;
-	cout << "number of matches: " << matches.size() << "number of good matches: " << numGoodMatches << endl;
+	cout << "number of matches: " << matches.size() << " number of good matches: " << numGoodMatches << endl;
 	matches.erase(matches.begin() + numGoodMatches, matches.end());
 
 	for (size_t i = 0; i < matches.size(); i++) {
@@ -67,77 +68,9 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 	drawMatches(win_frame, keypointsRef, src_unwarped, keypointsLive, matches, THELINES_V);
 	resize(THELINES_V, THELINES_V, Size(), .5, .5);
 	imshow("THELINES_V", THELINES_V);
-	/*
-	//---------------------------
-	//this code returns vectors of vectors of matched points- it assumes you want the points for multiple reference images
-	const int numGoodMatchVectors = matches.size() * .1f;
-	matches.erase(matches.begin() + numGoodMatchVectors, matches.end());
-
-	for (int i = 0; i < matches.size(); i++) {
-		//sorts matches by confidence level
-		sort(matches[i].begin(), matches[i].end());
-
-		//kills bad matches
-		const int numGoodMatches = matches[i].size() * GOOD_MATCH_PERCENT;
-		matches[i].erase(matches[i].begin() + numGoodMatches, matches[i].end());
-	}
-
-	//get location of good matches 
-	for (size_t j = 0; j < matches.size(); j++) {
-		vector<Point2f> videoPointsRefFrame;
-		vector<Point2f> videoPointsLiveFrame;
-		for (size_t i = 0; i < matches[j].size(); i++) {
-			videoPointsRefFrame.push_back(videoKeypointsRef[j][matches[j][i].queryIdx].pt);
-			videoPointsLiveFrame.push_back(keypointsLive[matches[j][i].trainIdx].pt);
-		}
-		videoPointsRef.push_back(videoPointsRefFrame);
-		videoPointsLive.push_back(videoPointsLiveFrame);
-		videoPointsRefFrame.clear();
-		videoPointsLiveFrame.clear();
-	}
-	//----------------------
-	*/
 }
 
-/*
-int refVideoProcessor(vector<KeyPoint>& refVideoKeypoints,  Mat& refVideoDescriptors, Mat& best_frame) {
-	//VideoWriter video("vid_ref_keypoints.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 10.0f, Size(1920, 1080));
-	VideoCapture cap("vid_ref.avi");
-	Ptr<Feature2D> orb = ORB::create();
-	if (!cap.isOpened()) {
-		cout << "Could not open reference video" << endl;
-		return -1;
-	}
-
-	for (int i = 0; i < cap.get(CAP_PROP_FRAME_COUNT); i++) {
-		Mat frame;
-		cap >> frame;
-		if (frame.empty()) {
-			break;
-		}
-
-	vector<KeyPoint> keypoints;
-	Mat descriptors;
-	orb->detectAndCompute(frame, Mat(), keypoints, descriptors);
-
-	if (keypoints.size() > refVideoKeypoints.size()) {
-		refVideoKeypoints = keypoints;
-		refVideoDescriptors = descriptors;
-		best_frame = frame;
-	}
-	if (best_frame.empty()) {
-		cout << "best frame is empty!" << endl;
-	}
-	//Mat keypoint_frame;
-	//drawKeypoints(best_frame, refVideoKeypoints, keypoint_frame, Scalar(255, 255, 0));
-	//imwrite("Keypoint_frame.png", keypoint_frame);
-	//video.write(frame);
-	}
-	return 0;
-}
-*/
-
-void displacement(vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat K, Mat D, Mat& rvec, Mat& tvec) {
+void rvecAndTvec(vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat K, Mat D, Mat& rvec, Mat& tvec) {
 	vector<Point3f> pointsRef3D;
 
 	for (int i = 0; i < pointsRef.size(); i++) {
@@ -165,15 +98,39 @@ void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> point
 	resize(img_warpedToPerspective, img_warpedToPerspective, Size(), .5, .5);
 }
 
-int offset(int frameIdx, Mat tvec, Mat& tvec_out) {
-	//to set tvec_out to the right size
+void cameraOffsetOrigin(Mat rvec, Mat tvec, Mat& T) {
+	Mat R;
+	Rodrigues(rvec, R);
+	R = R.t();
+	tvec = -R * tvec;
+	T = Mat::eye(4, 4, R.type());
+	T(Range(0, 3), Range(0, 3)) = R * 1;
+	T(Range(0, 3), Range(3, 4)) = tvec * 1;
+
+	cout << "Offset from ref image" << T << endl;
+}
+
+int offset(int frameIdx, Mat rvec, Mat tvec, Mat& rvec_out, Mat& tvec_out) {
+	//to set tvec_out and rvec_out to the right size
+	rvec_out = rvec;
 	tvec_out = tvec;
 	if (frameIdx = 1) {
-
+		//how to assign rvec_out and tvec_out?
+		//I assume row THEN column
+		Mat rvecOffset1 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
+		Mat tvecOffset1 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
+		add(rvec, rvecOffset1, rvec_out, noArray());
+		add(tvec, tvecOffset1, tvec_out, noArray());
 	} else if (frameIdx = 2) {
-
+		Mat rvecOffset2 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
+		Mat tvecOffset2 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
+		add(rvec, rvecOffset2, rvec, noArray());
+		add(tvec, tvecOffset2, tvec, noArray());
 	} else if (frameIdx = 3) {
-
+		Mat rvecOffset3 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
+		Mat tvecOffset3 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
+		add(rvec, rvecOffset3, rvec_out, noArray());
+		add(tvec, tvecOffset3, tvec_out, noArray());
 	}
 	else {
 		return -1;
@@ -201,7 +158,7 @@ int main(int argc, char** argv) {
 		stringstream pathS;
 		pathS << "./setup_images/" << i << ".png";
 		string path = pathS.str();
-		best_frame.push_back(imread(path));
+		best_frames.push_back(imread(path));
 	}
 
 	//Open default camera
@@ -253,7 +210,7 @@ int main(int argc, char** argv) {
 
 	while (true)
 	{
-		Mat img_warpedToPerspective, homography, img_matches, rvec, tvec;
+		Mat img_warpedToPerspective, homography, img_matches, rvec, tvec, rvec_out, tvec_out, T;
 		vector<Mat> rotations, translations, normals;
 		vector<Point2f> pointsRef, pointsLive;
 		// read a new frame from video breaking the while loop if the frames cannot be captured
@@ -280,13 +237,15 @@ int main(int argc, char** argv) {
 
 		cout << "videoPointsRef.size()" << videoPointsRef.size() << endl;
 
-		//get displacement from ref image
-		displacement(videoPointsRef, videoPointsLive, K, D, rvec, tvec);
+		//get rvec and tvec from ref image
+		rvecAndTvec(videoPointsRef, videoPointsLive, K, D, rvec, tvec);
 		cout << "rotation vector lenght: " << sum(rvec) << endl;
 		cout << "translation vector lenght: " << sum(tvec) << endl;
 
+		cameraOffsetOrigin(rvec, tvec, T);
+
 		//add offset to tvec based on frameIdx
-		offset(frameIdx, tvec, tvec);
+		offset(frameIdx, rvec, tvec, rvec_out, tvec_out);
 
 		imshow("best frame: ", win_frame);
 		homographyPerspectiveWarp(videoPointsRef, videoPointsLive, win_frame, src_unwarped, homography, img_warpedToPerspective);

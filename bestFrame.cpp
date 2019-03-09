@@ -67,9 +67,8 @@ int main() {
 		cout << "best_frame size: " << best_frames.size() << endl;
 		cout << "YEEEEEEEEEEET " << i << endl;
 	}
-
-
-
-	waitKey(5000000);
+	string waitME;
+	cout << "for seeing cout debugging stuff: it's just a cin";
+	cin >> waitME;
 	return 0;
 }

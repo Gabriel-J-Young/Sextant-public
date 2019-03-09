@@ -71,6 +71,8 @@ int main(int argc, char** argv) {
 	}
 	video.release();
 	cout << "wrote a " << seconds << " second video called: " << name << endl;
-	waitKey(50000);
+	string waitME;
+	cout << "for seeing cout debugging stuff: it's just a cin";
+	cin >> waitME;
 	return 0;
 }
