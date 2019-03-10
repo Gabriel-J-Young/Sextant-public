@@ -110,29 +110,121 @@ void cameraOffsetOrigin(Mat rvec, Mat tvec, Mat& T) {
 	cout << "Offset from ref image" << T << endl;
 }
 
-int offset(int frameIdx, Mat rvec, Mat tvec, Mat& rvec_out, Mat& tvec_out) {
-	//to set tvec_out and rvec_out to the right size
-	rvec_out = rvec;
-	tvec_out = tvec;
+int offset(int frameIdx, Mat T, Point2d& position) {
 	if (frameIdx = 1) {
-		//how to assign rvec_out and tvec_out?
-		//I assume row THEN column
-		Mat rvecOffset1 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		Mat tvecOffset1 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		add(rvec, rvecOffset1, rvec_out, noArray());
-		add(tvec, tvecOffset1, tvec_out, noArray());
-	} else if (frameIdx = 2) {
-		Mat rvecOffset2 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		Mat tvecOffset2 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		add(rvec, rvecOffset2, rvec, noArray());
-		add(tvec, tvecOffset2, tvec, noArray());
-	} else if (frameIdx = 3) {
-		Mat rvecOffset3 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		Mat tvecOffset3 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		add(rvec, rvecOffset3, rvec_out, noArray());
-		add(tvec, tvecOffset3, tvec_out, noArray());
+		//I assume cm
+		position.x = 50 + T.at<double>(0, 4);
+		position.y = 60 + T.at<double>(1, 4);
+		return 0;
+
+	} 
+	else if (frameIdx = 2) {
+		position.x = 106 + T.at<double>(0, 4);
+		position.y = 84 + T.at<double>(1, 4);
+		return 0;
+	} 
+	else if (frameIdx = 3) {
+		position.x = 162 + T.at<double>(0, 4);
+		position.y = 84  + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 4) {
+		position.x = 226 + T.at<double>(0, 4);
+		position.y = 84 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 5) {
+		position.x = 292.5 + T.at<double>(0, 4);
+		position.y = 70.4 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 6) {
+		position.x = 256 + T.at<double>(0, 4);
+		position.y = 169 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 7) {
+		position.x = 162 + T.at<double>(0, 4);
+		position.y = 203 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 8) {
+		position.x = 69 + T.at<double>(0, 4);
+		position.y = 202 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 9) {
+		position.x = 59 + T.at<double>(0, 4);
+		position.y = 319 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 10) {
+		position.x = 118 + T.at<double>(0, 4);
+		position.y = 324 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 11) {
+		position.x = 187 + T.at<double>(0, 4);
+		position.y = 427 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 12) {
+		position.x = 87 + T.at<double>(0, 4);
+		position.y = 427 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 13) {
+		position.x = 98 + T.at<double>(0, 4);
+		position.y = 612.7 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 14) {
+		position.x = 162 + T.at<double>(0, 4);
+		position.y = 612.7 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 15) {
+		position.x = 226 + T.at<double>(0, 4);
+		position.y = 612.7 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 16) {
+		position.x = 280 + T.at<double>(0, 4);
+		position.y = 558.8 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 17) {
+		position.x = 236.5 + T.at<double>(0, 4);
+		position.y = 464 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 18) {
+		position.x = 162 + T.at<double>(0, 4);
+		position.y = 427 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 19) {
+		position.x = 246 + T.at<double>(0, 4);
+		position.y = 385.5 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 20) {
+		position.x = 196 + T.at<double>(0, 4);
+		position.y = 324 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 21) {
+		position.x = 251 + T.at<double>(0, 4);
+		position.y = 324 + T.at<double>(1, 4);
+		return 0;
+	}
+	else if (frameIdx = 22) {
+		position.x = 240.3 + T.at<double>(0, 4);
+		position.y = 229 + T.at<double>(1, 4);
+		return 0;
 	}
 	else {
+	cout << "frame Idx was not between 1 and 22" << endl;
 		return -1;
 	}
 	return 0;
@@ -142,6 +234,7 @@ int main(int argc, char** argv) {
 	Mat newCamMatForUndistort;
 	Mat map1, map2;
 	Mat src; Mat src_unwarped;
+	Point2d position;
 
 	const float GOOD_MATCH_PERCENT = 0.1f;
 
@@ -162,6 +255,7 @@ int main(int argc, char** argv) {
 	}
 
 	//Open default camera
+	//or read video
 	VideoCapture cap(0);
 
 	if (cap.isOpened() == false)
@@ -244,8 +338,9 @@ int main(int argc, char** argv) {
 
 		cameraOffsetOrigin(rvec, tvec, T);
 
-		//add offset to tvec based on frameIdx
-		offset(frameIdx, rvec, tvec, rvec_out, tvec_out);
+		//generates Point2d with x y position
+		offset(frameIdx, T, position);
+		cout << "position: " << position << endl;
 
 		imshow("best frame: ", win_frame);
 		homographyPerspectiveWarp(videoPointsRef, videoPointsLive, win_frame, src_unwarped, homography, img_warpedToPerspective);
