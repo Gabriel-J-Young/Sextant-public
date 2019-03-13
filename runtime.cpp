@@ -113,118 +113,23 @@ void cameraOffsetOrigin(Mat rvec, Mat tvec, Mat& T) {
 int offset(int frameIdx, Mat T, Point2d& position) {
 	if (frameIdx = 1) {
 		//I assume cm
-		position.x = 50 + T.at<double>(0, 4);
-		position.y = 60 + T.at<double>(1, 4);
+		position.x = 0 + T.at<double>(0, 4);
+		position.y = 0 + T.at<double>(1, 4);
 		return 0;
 
 	} 
 	else if (frameIdx = 2) {
-		position.x = 106 + T.at<double>(0, 4);
-		position.y = 84 + T.at<double>(1, 4);
+		position.x = 0 + T.at<double>(0, 4);
+		position.y = 190 + T.at<double>(1, 4);
 		return 0;
 	} 
 	else if (frameIdx = 3) {
-		position.x = 162 + T.at<double>(0, 4);
-		position.y = 84  + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 4) {
-		position.x = 226 + T.at<double>(0, 4);
-		position.y = 84 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 5) {
-		position.x = 292.5 + T.at<double>(0, 4);
-		position.y = 70.4 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 6) {
-		position.x = 256 + T.at<double>(0, 4);
-		position.y = 169 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 7) {
-		position.x = 162 + T.at<double>(0, 4);
-		position.y = 203 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 8) {
-		position.x = 69 + T.at<double>(0, 4);
-		position.y = 202 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 9) {
-		position.x = 59 + T.at<double>(0, 4);
-		position.y = 319 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 10) {
-		position.x = 118 + T.at<double>(0, 4);
-		position.y = 324 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 11) {
-		position.x = 187 + T.at<double>(0, 4);
-		position.y = 427 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 12) {
-		position.x = 87 + T.at<double>(0, 4);
-		position.y = 427 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 13) {
-		position.x = 98 + T.at<double>(0, 4);
-		position.y = 612.7 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 14) {
-		position.x = 162 + T.at<double>(0, 4);
-		position.y = 612.7 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 15) {
-		position.x = 226 + T.at<double>(0, 4);
-		position.y = 612.7 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 16) {
-		position.x = 280 + T.at<double>(0, 4);
-		position.y = 558.8 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 17) {
-		position.x = 236.5 + T.at<double>(0, 4);
-		position.y = 464 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 18) {
-		position.x = 162 + T.at<double>(0, 4);
-		position.y = 427 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 19) {
-		position.x = 246 + T.at<double>(0, 4);
-		position.y = 385.5 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 20) {
-		position.x = 196 + T.at<double>(0, 4);
-		position.y = 324 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 21) {
-		position.x = 251 + T.at<double>(0, 4);
-		position.y = 324 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 22) {
-		position.x = 240.3 + T.at<double>(0, 4);
-		position.y = 229 + T.at<double>(1, 4);
+		position.x = 0 + T.at<double>(0, 4);
+		position.y = 431  + T.at<double>(1, 4);
 		return 0;
 	}
 	else {
-	cout << "frame Idx was not between 1 and 22" << endl;
+	cout << "frame Idx was not between 1 and 3" << endl;
 		return -1;
 	}
 	return 0;
