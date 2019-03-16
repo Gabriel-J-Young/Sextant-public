@@ -7,7 +7,6 @@ using namespace cv::xfeatures2d;
 using namespace std;
 
 int main() {
-	cout << "oh yeha" << endl;
 	vector<String> videoNames;
 	vector<vector<Mat>> videoMats;
 	vector<Mat> best_frames;
@@ -65,10 +64,8 @@ int main() {
 
 		imwrite(name, best_frames[i]);
 		cout << "best_frame size: " << best_frames.size() << endl;
-		cout << "YEEEEEEEEEEET " << i << endl;
+		cout << "Idx:  " << i << endl;
 	}
-	string waitME;
-	cout << "for seeing cout debugging stuff: it's just a cin";
-	cin >> waitME;
+
 	return 0;
 }
