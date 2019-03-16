@@ -38,7 +38,7 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 
 		orb->detectAndCompute(best_frames[i], Mat(), temp_keypointsRef, temp_desciptorsRef);
 		matcher->match(temp_desciptorsRef, descriptorsLive, temp_matches);
-		cout << "temp matches: " << temp_matches.size() << endl;
+		cout << "temp matches of " << i << " : " << temp_matches.size() << endl;
 
 		if (temp_matches.size() > matches.size()) {
 			matches = temp_matches;
@@ -46,14 +46,17 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 			descriptorsRef = temp_desciptorsRef;
 			frameIdx = i;
 			win_frame = best_frames[i];
+			cout << "idx of win frame: " << i << endl << "win frame matches: " << matches.size() << endl;
 		}
+
+
 	}
 
 	//sort by confidence level
 	sort(matches.begin(), matches.end());
 
-	const int numGoodMatches = matches.size() * GOOD_MATCH_PERCENT;
-	cout << "number of matches: " << matches.size() << " number of good matches: " << numGoodMatches << endl;
+	const int numGoodMatches = (int)(matches.size() * GOOD_MATCH_PERCENT);
+	//cout << "number of matches: " << matches.size() << " number of good matches: " << numGoodMatches << endl;
 	matches.erase(matches.begin() + numGoodMatches, matches.end());
 
 	for (size_t i = 0; i < matches.size(); i++) {
@@ -77,13 +80,13 @@ void rvecAndTvec(vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat K, M
 		Point3d point;
 		point.x = (float)pointsRef[i].x;
 		point.y = (float)pointsRef[i].y;
-		point.z = 1.0f;
+		point.z = 0.0f;
 		pointsRef3D.push_back(point);
 	}
 
 	solvePnPRansac(pointsRef3D, pointsLive, K, D, rvec, tvec);
 	cout << "rotation vector length: " << sum(rvec) << endl;
-	cout << "translation vector length: " << sum(tvec) << endl;
+	cout << "translation: " << tvec << endl;
 }
 
 void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> pointsLive,  Mat best_frame, Mat src_unwarped, Mat& homography, Mat &img_warpedToPerspective) {
@@ -107,32 +110,33 @@ void cameraOffsetOrigin(Mat rvec, Mat tvec, Mat& T) {
 	T(Range(0, 3), Range(0, 3)) = R * 1;
 	T(Range(0, 3), Range(3, 4)) = tvec * 1;
 
-	cout << "Offset from ref image" << T << endl;
+	cout << "Offset from ref image" << endl << T << endl;
+	ofstream T_file;
+	T_file.open("T_data.txt", ios_base::app);
+	T_file << T.at<double>(0, 3) << " , " << T.at<double>(1, 3) << endl;
+	T_file.close();
 }
 
-int offset(int frameIdx, Mat rvec, Mat tvec, Mat& rvec_out, Mat& tvec_out) {
-	//to set tvec_out and rvec_out to the right size
-	rvec_out = rvec;
-	tvec_out = tvec;
+int offset(int frameIdx, Mat T, Point2d& position) {
 	if (frameIdx = 1) {
-		//how to assign rvec_out and tvec_out?
-		//I assume row THEN column
-		Mat rvecOffset1 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		Mat tvecOffset1 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		add(rvec, rvecOffset1, rvec_out, noArray());
-		add(tvec, tvecOffset1, tvec_out, noArray());
-	} else if (frameIdx = 2) {
-		Mat rvecOffset2 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		Mat tvecOffset2 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		add(rvec, rvecOffset2, rvec, noArray());
-		add(tvec, tvecOffset2, tvec, noArray());
-	} else if (frameIdx = 3) {
-		Mat rvecOffset3 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		Mat tvecOffset3 = (Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
-		add(rvec, rvecOffset3, rvec_out, noArray());
-		add(tvec, tvecOffset3, tvec_out, noArray());
+		//I assume cm
+		position.x = 0 + T.at<double>(0, 3);
+		position.y = 0 + T.at<double>(1, 3);
+		return 0;
+
+	} 
+	else if (frameIdx = 2) {
+		position.x = 0 + T.at<double>(0, 4);
+		position.y = 332 + T.at<double>(1, 4);
+		return 0;
+	} 
+	else if (frameIdx = 3) {
+		position.x = 0 + T.at<double>(0, 4);
+		position.y = 0  + T.at<double>(1, 4);
+		return 0;
 	}
 	else {
+	cout << "frame Idx was not between 1 and 2" << endl;
 		return -1;
 	}
 	return 0;
@@ -142,8 +146,9 @@ int main(int argc, char** argv) {
 	Mat newCamMatForUndistort;
 	Mat map1, map2;
 	Mat src; Mat src_unwarped;
+	Point2d position;
 
-	const float GOOD_MATCH_PERCENT = 0.1f;
+	const float GOOD_MATCH_PERCENT = .1f; //increase me!
 
 	vector<String> best_frames_names;
 	vector<Mat> best_frames;
@@ -156,12 +161,14 @@ int main(int argc, char** argv) {
 	for (int i = 0; i < best_frames_names.size(); i++) {
 		Mat best_frame;
 		stringstream pathS;
-		pathS << "./setup_images/" << i << ".png";
+		pathS << "./setup_images/" << i+1 << ".png";
 		string path = pathS.str();
+		cout << "path: " << path << endl;
 		best_frames.push_back(imread(path));
 	}
 
 	//Open default camera
+	//or read video
 	VideoCapture cap(0);
 
 	if (cap.isOpened() == false)
@@ -201,7 +208,7 @@ int main(int argc, char** argv) {
 	}
 	cout << "Camera open!" << endl;
 
-	Size image_size = src.size();
+	Size image_size = src.size(); 
 	//generates undistortions maps from first frame
 	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
 	fisheye::initUndistortRectifyMap(K, D, Matx33d::eye(), newCamMatForUndistort, image_size, CV_16SC2, map1, map2);
@@ -239,13 +246,14 @@ int main(int argc, char** argv) {
 
 		//get rvec and tvec from ref image
 		rvecAndTvec(videoPointsRef, videoPointsLive, K, D, rvec, tvec);
-		cout << "rotation vector lenght: " << sum(rvec) << endl;
-		cout << "translation vector lenght: " << sum(tvec) << endl;
+		//cout << "rotation vector lenght: " << sum(rvec) << endl;
+		//cout << "translation vector lenght: " << sum(tvec) << endl;
 
 		cameraOffsetOrigin(rvec, tvec, T);
 
-		//add offset to tvec based on frameIdx
-		offset(frameIdx, rvec, tvec, rvec_out, tvec_out);
+		//generates Point2d with x y position
+		offset(frameIdx, T, position);
+		cout << "position: " << position << endl;
 
 		imshow("best frame: ", win_frame);
 		homographyPerspectiveWarp(videoPointsRef, videoPointsLive, win_frame, src_unwarped, homography, img_warpedToPerspective);
