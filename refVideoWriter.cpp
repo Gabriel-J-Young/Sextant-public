@@ -72,7 +72,7 @@ int videoWriter(string& nameIn) {
 
 		video.write(frame);
 	}
-	//video.release();
+	video.release();
 	cout << "wrote a " << seconds << " second video called: " << name << endl;
 
 	return 0;
