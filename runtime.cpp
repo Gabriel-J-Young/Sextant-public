@@ -4,6 +4,38 @@ using namespace cv;
 using namespace cv::xfeatures2d;
 using namespace std;
 
+void cameraPoseFromHomography(const Mat& homography, Mat& pose) {
+
+	//for this, the "p1" and "p2" and ect. don't properly copy you need to use
+	//".copyTo()" to copy Mats
+
+	//eye is col then rows. yes, it's retarded
+	pose = Mat::eye(3, 4, CV_32FC1);
+	float norm1 = (float)norm(homography.col(0));
+	float norm2 = (float)norm(homography.col(1));
+	float tnorm = (norm1 + norm2) / 2.0f;
+
+	Mat p1 = homography.col(0); // Pointer to first column of H
+	Mat p2 = pose.col(0); // Pointer to first column of pose (empty)
+
+	normalize(p1, p2); // Normalize the rotation and copies the column to pose
+
+	p1 = homography.col(1); // Pointer to second column of H
+	p2 = pose.col(1); // Pointer to second column of pose (empty)
+
+	normalize(p1, p2); // Normalize the rotation and copies the column to
+
+	p1 = pose.col(0);
+	p2 = pose.col(1);
+
+	Mat p3 = p1.cross(p2); // Computes the cross-product of p1 and p2
+	Mat c2 = pose.col(2); // Pointer to third column of pose
+	p3.copyTo(c2); // Third column is the crossproduct of columns one and two
+
+	pose.col(3) = homography.col(2) / tnorm; //vector t [R|t] is the last column of pose
+	//cout << pose.col(3) << endl;
+}
+
 void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat> best_frames, int& frameIdx, Mat& win_frame, vector<Point2f>& videoPointsRef, vector<Point2f>& videoPointsLive) {
 	vector<KeyPoint> keypointsRef;
 	Mat descriptorsRef;
@@ -52,7 +84,7 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 	//sort by confidence level
 	sort(matches.begin(), matches.end());
 
-	const int numGoodMatches = matches.size() * GOOD_MATCH_PERCENT;
+	const int numGoodMatches = (int)(matches.size() * GOOD_MATCH_PERCENT);
 	cout << "number of matches: " << matches.size() << " number of good matches: " << numGoodMatches << endl;
 	matches.erase(matches.begin() + numGoodMatches, matches.end());
 
@@ -346,6 +378,10 @@ int main(int argc, char** argv) {
 		homographyPerspectiveWarp(videoPointsRef, videoPointsLive, win_frame, src_unwarped, homography, img_warpedToPerspective);
 		imshow("img_warpedToPerspective", img_warpedToPerspective);
 
+		decomposeHomographyMat(homography, K, rotations, translations, normals);
+		for (Mat a : translations) {
+			cout << "homo tvecs: " << a << endl;
+		}
 
 		//wait for 1 ms until any key is pressed.  
 		//If the 'Esc' key is pressed, break the while loop.
