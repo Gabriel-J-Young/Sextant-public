@@ -36,10 +36,7 @@ void cameraPoseFromHomography(const Mat& homography, Mat& pose) {
 	pose.col(3) = homography.col(2) / tnorm; //vector t [R|t] is the last column of pose
 	//cout << pose.col(3) << endl;
 }
-
-void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat> best_frames, int& frameIdx, Mat& win_frame, vector<Point2f>& videoPointsRef, vector<Point2f>& videoPointsLive) {
 void videoKeypointMatches(double GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat> best_frames, int& frameIdx, Mat& win_frame, vector<Point2f>& videoPointsRef, vector<Point2f>& videoPointsLive) {
->>>>>>> origin/AtriumPositioningSystem
 	vector<KeyPoint> keypointsRef;
 	Mat descriptorsRef;
 	Mat img_keypointsRef;
@@ -290,7 +287,7 @@ int main(int argc, char** argv) {
 
 		//generates Point2d with x y position
 		offset(frameIdx, T, position);
-		cout << "position: " << position << endl;
+		//cout << "position: " << position << endl;
 
 		imshow("best frame: ", win_frame);
 		homographyPerspectiveWarp(videoPointsRef, videoPointsLive, win_frame, src_unwarped, homography, img_warpedToPerspective);
@@ -300,6 +297,7 @@ int main(int argc, char** argv) {
 		for (Mat a : translations) {
 			cout << "homo tvecs: " << a << endl;
 		}
+		cout << "---------------------------------------------------------------------" << endl;
 
 		//wait for 1 ms until any key is pressed.  
 		//If the 'Esc' key is pressed, break the while loop.
