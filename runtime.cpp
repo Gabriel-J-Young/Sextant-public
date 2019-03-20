@@ -4,7 +4,7 @@ using namespace cv;
 using namespace cv::xfeatures2d;
 using namespace std;
 
-void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat> best_frames, int& frameIdx, Mat& win_frame, vector<Point2f>& videoPointsRef, vector<Point2f>& videoPointsLive) {
+void videoKeypointMatches(double GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat> best_frames, int& frameIdx, Mat& win_frame, vector<Point2f>& videoPointsRef, vector<Point2f>& videoPointsLive) {
 	vector<KeyPoint> keypointsRef;
 	Mat descriptorsRef;
 	Mat img_keypointsRef;
@@ -29,7 +29,7 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 	drawKeypoints(src_unwarped, keypointsLive, img_keypointsLive, Scalar(0, 0, 255));
 	imshow("live keypoints", img_keypointsLive);
 
-	cout << "best_frame size: " << best_frames.size() << endl;;
+	//cout << "best_frame size: " << best_frames.size() << endl;;
 
 	for (int i = 0; i < best_frames.size(); i++) {
 		vector<KeyPoint> temp_keypointsRef;
@@ -37,8 +37,9 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 		vector<DMatch> temp_matches;
 
 		orb->detectAndCompute(best_frames[i], Mat(), temp_keypointsRef, temp_desciptorsRef);
+
 		matcher->match(temp_desciptorsRef, descriptorsLive, temp_matches);
-		cout << "temp matches of " << i << " : " << temp_matches.size() << endl;
+		//cout << "temp matches of " << i << " : " << temp_matches.size() << endl;
 
 		if (temp_matches.size() > matches.size()) {
 			matches = temp_matches;
@@ -46,7 +47,7 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 			descriptorsRef = temp_desciptorsRef;
 			frameIdx = i;
 			win_frame = best_frames[i];
-			cout << "idx of win frame: " << i << endl << "win frame matches: " << matches.size() << endl;
+			//cout << "idx of win frame: " << i << endl << "win frame matches: " << matches.size() << endl;
 		}
 
 
@@ -65,7 +66,7 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 	}
 
 	if (win_frame.empty()) {
-		cout << "win_frame is empty!" << endl;
+		//cout << "win_frame is empty!" << endl;
 	}
 
 	drawMatches(win_frame, keypointsRef, src_unwarped, keypointsLive, matches, THELINES_V);
@@ -85,8 +86,8 @@ void rvecAndTvec(vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat K, M
 	}
 
 	solvePnPRansac(pointsRef3D, pointsLive, K, D, rvec, tvec);
-	cout << "rotation vector length: " << sum(rvec) << endl;
-	cout << "translation: " << tvec << endl;
+	//cout << "rotation vector length: " << sum(rvec) << endl;
+	//cout << "translation: " << tvec << endl;
 }
 
 void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> pointsLive,  Mat best_frame, Mat src_unwarped, Mat& homography, Mat &img_warpedToPerspective) {
@@ -102,6 +103,7 @@ void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> point
 }
 
 void cameraOffsetOrigin(Mat rvec, Mat tvec, Mat& T) {
+	//cout << "position before T: " << tvec.at<double>(0, 0) << ", " << tvec.at<double>(1, 0) << endl;
 	Mat R;
 	Rodrigues(rvec, R);
 	R = R.t();
@@ -109,8 +111,7 @@ void cameraOffsetOrigin(Mat rvec, Mat tvec, Mat& T) {
 	T = Mat::eye(4, 4, R.type());
 	T(Range(0, 3), Range(0, 3)) = R * 1;
 	T(Range(0, 3), Range(3, 4)) = tvec * 1;
-
-	cout << "Offset from ref image" << endl << T << endl;
+	//cout << "Offset from ref image" << endl << T << endl;
 	ofstream T_file;
 	T_file.open("T_data.txt", ios_base::app);
 	T_file << T.at<double>(0, 3) << " , " << T.at<double>(1, 3) << endl;
@@ -147,8 +148,8 @@ int main(int argc, char** argv) {
 	Mat map1, map2;
 	Mat src; Mat src_unwarped;
 	Point2d position;
-
-	const float GOOD_MATCH_PERCENT = .1f; //increase me!
+	 
+	const double GOOD_MATCH_PERCENT = .1; //increase me!
 
 	vector<String> best_frames_names;
 	vector<Mat> best_frames;
@@ -185,7 +186,7 @@ int main(int argc, char** argv) {
 	//finds & prints camera dimensions
 	double dWidth = cap.get(CAP_PROP_FRAME_WIDTH);
 	double dHeight = cap.get(CAP_PROP_FRAME_HEIGHT);
-	cout << "Resolution is: " << dWidth << " x " << dHeight << endl;
+	//cout << "Resolution is: " << dWidth << " x " << dHeight << endl;
 
 	//hardcoded calibration data
 	Mat K = (Mat_<double>(3, 3) << 540.6884489226692, 0.0, 951.3635524878698, 0.0, 540.4187901470385, 546.9124878500451, 0.0, 0.0, 1.0);
@@ -242,7 +243,7 @@ int main(int argc, char** argv) {
 		vector<Point2f> videoPointsLive;
 		videoKeypointMatches(GOOD_MATCH_PERCENT, src_unwarped, best_frames, frameIdx, win_frame, videoPointsRef, videoPointsLive);
 
-		cout << "videoPointsRef.size()" << videoPointsRef.size() << endl;
+		//cout << "videoPointsRef.size()" << videoPointsRef.size() << endl;
 
 		//get rvec and tvec from ref image
 		rvecAndTvec(videoPointsRef, videoPointsLive, K, D, rvec, tvec);
