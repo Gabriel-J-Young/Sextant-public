@@ -4,6 +4,7 @@ using namespace cv;
 using namespace cv::xfeatures2d;
 using namespace std;
 
+
 void cameraPoseFromHomography(const Mat& homography, Mat& pose) {
 
 	//for this, the "p1" and "p2" and ect. don't properly copy you need to use
@@ -37,6 +38,8 @@ void cameraPoseFromHomography(const Mat& homography, Mat& pose) {
 }
 
 void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat> best_frames, int& frameIdx, Mat& win_frame, vector<Point2f>& videoPointsRef, vector<Point2f>& videoPointsLive) {
+void videoKeypointMatches(double GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat> best_frames, int& frameIdx, Mat& win_frame, vector<Point2f>& videoPointsRef, vector<Point2f>& videoPointsLive) {
+>>>>>>> origin/AtriumPositioningSystem
 	vector<KeyPoint> keypointsRef;
 	Mat descriptorsRef;
 	Mat img_keypointsRef;
@@ -61,7 +64,7 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 	drawKeypoints(src_unwarped, keypointsLive, img_keypointsLive, Scalar(0, 0, 255));
 	imshow("live keypoints", img_keypointsLive);
 
-	cout << "best_frame size: " << best_frames.size() << endl;;
+	//cout << "best_frame size: " << best_frames.size() << endl;;
 
 	for (int i = 0; i < best_frames.size(); i++) {
 		vector<KeyPoint> temp_keypointsRef;
@@ -69,8 +72,9 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 		vector<DMatch> temp_matches;
 
 		orb->detectAndCompute(best_frames[i], Mat(), temp_keypointsRef, temp_desciptorsRef);
+
 		matcher->match(temp_desciptorsRef, descriptorsLive, temp_matches);
-		cout << "temp matches: " << temp_matches.size() << endl;
+		//cout << "temp matches of " << i << " : " << temp_matches.size() << endl;
 
 		if (temp_matches.size() > matches.size()) {
 			matches = temp_matches;
@@ -78,14 +82,18 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 			descriptorsRef = temp_desciptorsRef;
 			frameIdx = i;
 			win_frame = best_frames[i];
+			//cout << "idx of win frame: " << i << endl << "win frame matches: " << matches.size() << endl;
 		}
+
+
 	}
 
 	//sort by confidence level
 	sort(matches.begin(), matches.end());
 
 	const int numGoodMatches = (int)(matches.size() * GOOD_MATCH_PERCENT);
-	cout << "number of matches: " << matches.size() << " number of good matches: " << numGoodMatches << endl;
+
+	//cout << "number of matches: " << matches.size() << " number of good matches: " << numGoodMatches << endl;
 	matches.erase(matches.begin() + numGoodMatches, matches.end());
 
 	for (size_t i = 0; i < matches.size(); i++) {
@@ -94,7 +102,7 @@ void videoKeypointMatches(float GOOD_MATCH_PERCENT, Mat src_unwarped, vector<Mat
 	}
 
 	if (win_frame.empty()) {
-		cout << "win_frame is empty!" << endl;
+		//cout << "win_frame is empty!" << endl;
 	}
 
 	drawMatches(win_frame, keypointsRef, src_unwarped, keypointsLive, matches, THELINES_V);
@@ -109,13 +117,13 @@ void rvecAndTvec(vector<Point2f> pointsRef, vector<Point2f> pointsLive, Mat K, M
 		Point3d point;
 		point.x = (float)pointsRef[i].x;
 		point.y = (float)pointsRef[i].y;
-		point.z = 1.0f;
+		point.z = 0.0f;
 		pointsRef3D.push_back(point);
 	}
 
 	solvePnPRansac(pointsRef3D, pointsLive, K, D, rvec, tvec);
-	cout << "rotation vector length: " << sum(rvec) << endl;
-	cout << "translation vector length: " << sum(tvec) << endl;
+	//cout << "rotation vector length: " << sum(rvec) << endl;
+	//cout << "translation: " << tvec << endl;
 }
 
 void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> pointsLive,  Mat best_frame, Mat src_unwarped, Mat& homography, Mat &img_warpedToPerspective) {
@@ -131,6 +139,7 @@ void homographyPerspectiveWarp (vector<Point2f> pointsRef, vector<Point2f> point
 }
 
 void cameraOffsetOrigin(Mat rvec, Mat tvec, Mat& T) {
+	//cout << "position before T: " << tvec.at<double>(0, 0) << ", " << tvec.at<double>(1, 0) << endl;
 	Mat R;
 	Rodrigues(rvec, R);
 	R = R.t();
@@ -138,125 +147,33 @@ void cameraOffsetOrigin(Mat rvec, Mat tvec, Mat& T) {
 	T = Mat::eye(4, 4, R.type());
 	T(Range(0, 3), Range(0, 3)) = R * 1;
 	T(Range(0, 3), Range(3, 4)) = tvec * 1;
-
-	cout << "Offset from ref image" << T << endl;
+	//cout << "Offset from ref image" << endl << T << endl;
+	ofstream T_file;
+	T_file.open("T_data.txt", ios_base::app);
+	T_file << T.at<double>(0, 3) << " , " << T.at<double>(1, 3) << endl;
+	T_file.close();
 }
 
 int offset(int frameIdx, Mat T, Point2d& position) {
 	if (frameIdx = 1) {
 		//I assume cm
-		position.x = 50 + T.at<double>(0, 4);
-		position.y = 60 + T.at<double>(1, 4);
+		position.x = 0 + T.at<double>(0, 3);
+		position.y = 0 + T.at<double>(1, 3);
 		return 0;
 
 	} 
 	else if (frameIdx = 2) {
-		position.x = 106 + T.at<double>(0, 4);
-		position.y = 84 + T.at<double>(1, 4);
+		position.x = 0 + T.at<double>(0, 4);
+		position.y = 332 + T.at<double>(1, 4);
 		return 0;
 	} 
 	else if (frameIdx = 3) {
-		position.x = 162 + T.at<double>(0, 4);
-		position.y = 84  + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 4) {
-		position.x = 226 + T.at<double>(0, 4);
-		position.y = 84 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 5) {
-		position.x = 292.5 + T.at<double>(0, 4);
-		position.y = 70.4 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 6) {
-		position.x = 256 + T.at<double>(0, 4);
-		position.y = 169 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 7) {
-		position.x = 162 + T.at<double>(0, 4);
-		position.y = 203 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 8) {
-		position.x = 69 + T.at<double>(0, 4);
-		position.y = 202 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 9) {
-		position.x = 59 + T.at<double>(0, 4);
-		position.y = 319 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 10) {
-		position.x = 118 + T.at<double>(0, 4);
-		position.y = 324 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 11) {
-		position.x = 187 + T.at<double>(0, 4);
-		position.y = 427 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 12) {
-		position.x = 87 + T.at<double>(0, 4);
-		position.y = 427 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 13) {
-		position.x = 98 + T.at<double>(0, 4);
-		position.y = 612.7 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 14) {
-		position.x = 162 + T.at<double>(0, 4);
-		position.y = 612.7 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 15) {
-		position.x = 226 + T.at<double>(0, 4);
-		position.y = 612.7 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 16) {
-		position.x = 280 + T.at<double>(0, 4);
-		position.y = 558.8 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 17) {
-		position.x = 236.5 + T.at<double>(0, 4);
-		position.y = 464 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 18) {
-		position.x = 162 + T.at<double>(0, 4);
-		position.y = 427 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 19) {
-		position.x = 246 + T.at<double>(0, 4);
-		position.y = 385.5 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 20) {
-		position.x = 196 + T.at<double>(0, 4);
-		position.y = 324 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 21) {
-		position.x = 251 + T.at<double>(0, 4);
-		position.y = 324 + T.at<double>(1, 4);
-		return 0;
-	}
-	else if (frameIdx = 22) {
-		position.x = 240.3 + T.at<double>(0, 4);
-		position.y = 229 + T.at<double>(1, 4);
+		position.x = 0 + T.at<double>(0, 4);
+		position.y = 0  + T.at<double>(1, 4);
 		return 0;
 	}
 	else {
-	cout << "frame Idx was not between 1 and 22" << endl;
+	cout << "frame Idx was not between 1 and 2" << endl;
 		return -1;
 	}
 	return 0;
@@ -267,8 +184,8 @@ int main(int argc, char** argv) {
 	Mat map1, map2;
 	Mat src; Mat src_unwarped;
 	Point2d position;
-
-	const float GOOD_MATCH_PERCENT = 0.1f;
+	 
+	const double GOOD_MATCH_PERCENT = .1; //increase me!
 
 	vector<String> best_frames_names;
 	vector<Mat> best_frames;
@@ -281,8 +198,9 @@ int main(int argc, char** argv) {
 	for (int i = 0; i < best_frames_names.size(); i++) {
 		Mat best_frame;
 		stringstream pathS;
-		pathS << "./setup_images/" << i << ".png";
+		pathS << "./setup_images/" << i+1 << ".png";
 		string path = pathS.str();
+		cout << "path: " << path << endl;
 		best_frames.push_back(imread(path));
 	}
 
@@ -304,7 +222,7 @@ int main(int argc, char** argv) {
 	//finds & prints camera dimensions
 	double dWidth = cap.get(CAP_PROP_FRAME_WIDTH);
 	double dHeight = cap.get(CAP_PROP_FRAME_HEIGHT);
-	cout << "Resolution is: " << dWidth << " x " << dHeight << endl;
+	//cout << "Resolution is: " << dWidth << " x " << dHeight << endl;
 
 	//hardcoded calibration data
 	Mat K = (Mat_<double>(3, 3) << 540.6884489226692, 0.0, 951.3635524878698, 0.0, 540.4187901470385, 546.9124878500451, 0.0, 0.0, 1.0);
@@ -327,7 +245,7 @@ int main(int argc, char** argv) {
 	}
 	cout << "Camera open!" << endl;
 
-	Size image_size = src.size();
+	Size image_size = src.size(); 
 	//generates undistortions maps from first frame
 	fisheye::estimateNewCameraMatrixForUndistortRectify(K, D, image_size, Matx33d::eye(), newCamMatForUndistort, 1, image_size);
 	fisheye::initUndistortRectifyMap(K, D, Matx33d::eye(), newCamMatForUndistort, image_size, CV_16SC2, map1, map2);
@@ -361,12 +279,12 @@ int main(int argc, char** argv) {
 		vector<Point2f> videoPointsLive;
 		videoKeypointMatches(GOOD_MATCH_PERCENT, src_unwarped, best_frames, frameIdx, win_frame, videoPointsRef, videoPointsLive);
 
-		cout << "videoPointsRef.size()" << videoPointsRef.size() << endl;
+		//cout << "videoPointsRef.size()" << videoPointsRef.size() << endl;
 
 		//get rvec and tvec from ref image
 		rvecAndTvec(videoPointsRef, videoPointsLive, K, D, rvec, tvec);
-		cout << "rotation vector lenght: " << sum(rvec) << endl;
-		cout << "translation vector lenght: " << sum(tvec) << endl;
+		//cout << "rotation vector lenght: " << sum(rvec) << endl;
+		//cout << "translation vector lenght: " << sum(tvec) << endl;
 
 		cameraOffsetOrigin(rvec, tvec, T);
 
