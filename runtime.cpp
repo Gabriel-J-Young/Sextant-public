@@ -154,23 +154,78 @@ void cameraOffsetOrigin(Mat rvec, Mat tvec, Mat& T) {
 int offset(int frameIdx, Mat T, Point2d& position) {
 	if (frameIdx = 1) {
 		//I assume cm
-		position.x = 0 + T.at<double>(0, 3);
-		position.y = 0 + T.at<double>(1, 3);
+		position.x = 218 + T.at<double>(0, 3);
+		position.y = 241 + T.at<double>(1, 3);
 		return 0;
 
 	} 
 	else if (frameIdx = 2) {
-		position.x = 0 + T.at<double>(0, 4);
-		position.y = 332 + T.at<double>(1, 4);
+		position.x = 574 + T.at<double>(0, 3);
+		position.y = 213 + T.at<double>(1, 3);
 		return 0;
 	} 
 	else if (frameIdx = 3) {
-		position.x = 0 + T.at<double>(0, 4);
-		position.y = 0  + T.at<double>(1, 4);
+		position.x = 218 + T.at<double>(0, 3);
+		position.y = 424 + T.at<double>(1, 3);
+		return 0;
+	}
+	else if (frameIdx = 4) {
+		position.x = 602 + T.at<double>(0, 3);
+		position.y = 424 + T.at<double>(1, 3);
+		return 0;
+	}
+	else if (frameIdx = 5) {
+		position.x = 648 + T.at<double>(0, 3);
+		position.y = 599 + T.at<double>(1, 3);
+		return 0;
+	}
+	else if (frameIdx = 6) {
+		position.x = 175 + T.at<double>(0, 3);
+		position.y = 599 + T.at<double>(1, 3);
+		return 0;
+	}
+	else if (frameIdx = 7) {
+		position.x = 183 + T.at<double>(0, 3);
+		position.y = 800 + T.at<double>(1, 3);
+		return 0;
+	}
+	else if (frameIdx = 8) {
+		position.x = 175 + T.at<double>(0, 3);
+		position.y = 1046 + T.at<double>(1, 3);
+		return 0;
+	}
+	else if (frameIdx = 9) {
+		position.x = 648 + T.at<double>(0, 3);
+		position.y = 1046 + T.at<double>(1, 3);
+		return 0;
+	}
+	else if (frameIdx = 10) {
+		position.x = 218 + T.at<double>(0, 3);
+		position.y = 1222 + T.at<double>(1, 3);
+		return 0;
+	}
+	else if (frameIdx = 11) {
+		position.x = 602 + T.at<double>(0, 3);
+		position.y = 1222 + T.at<double>(1, 3);
+		return 0;
+	}
+	else if (frameIdx = 12) {
+		position.x = 605 + T.at<double>(0, 3);
+		position.y = 1405 + T.at<double>(1, 3);
+		return 0;
+	}
+	else if (frameIdx = 13) {
+		position.x = 249 + T.at<double>(0, 3);
+		position.y = 1433 + T.at<double>(1, 3);
+		return 0;
+	}
+	else if (frameIdx = 14) {
+		position.x = 640 + T.at<double>(0, 3);
+		position.y = 800 + T.at<double>(1, 3);
 		return 0;
 	}
 	else {
-	cout << "frame Idx was not between 1 and 2" << endl;
+	cout << "frame Idx was not between 1 and 14" << endl;
 		return -1;
 	}
 	return 0;
